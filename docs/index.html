@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>promptcache — stop paying for the same prompt twice</title>
+  <meta name="description" content="A drop-in Python caching layer for LLM APIs. Exact match + semantic deduplication. No gateway required." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-surface: #111111;
+      --bg-subtle: #161616;
+      --border: #1f1f1f;
+      --border-mid: #2a2a2a;
+      --text-primary: #ededed;
+      --text-secondary: #888888;
+      --text-muted: #444444;
+      --accent: #ededed;
+      --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+    }
+
+    html {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(10, 10, 10, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .logo span {
+      color: var(--text-muted);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      border: 1px solid var(--border-mid);
+      padding: 3px 9px;
+      letter-spacing: 0.06em;
+    }
+
+    /* HERO */
+    .hero {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 100px 32px 80px;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .hero-h1 {
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -2px;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      max-width: 720px;
+    }
+
+    .hero-h1 em {
+      font-style: normal;
+      color: var(--text-secondary);
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 48px;
+      font-weight: 300;
+    }
+
+    /* CODE BLOCK */
+    .code-hero {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.75;
+      padding: 28px 32px;
+      margin-bottom: 48px;
+      max-width: 640px;
+      position: relative;
+    }
+
+    .code-hero::before {
+      content: 'Python';
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .code-line {
+      display: block;
+    }
+
+    .tok-comment  { color: #555; }
+    .tok-kw       { color: #888; }
+    .tok-fn       { color: #ccc; }
+    .tok-dec      { color: #ededed; }
+    .tok-str      { color: #999; }
+    .tok-param    { color: #bbb; }
+    .tok-hit      { color: #3dd68c; }
+    .tok-miss     { color: #888; }
+    .tok-dim      { color: #444; }
+
+    /* WAITLIST FORM */
+    .form-section {
+      margin-bottom: 80px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0;
+      max-width: 440px;
+    }
+
+    .email-input {
+      flex: 1;
+      height: 44px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-mid);
+      border-right: none;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 0 16px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    .email-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .email-input:focus {
+      border-color: #444;
+    }
+
+    .submit-btn {
+      height: 44px;
+      background: var(--text-primary);
+      border: 1px solid var(--text-primary);
+      color: var(--bg);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 0 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, opacity 0.15s;
+      letter-spacing: -0.1px;
+    }
+
+    .submit-btn:hover {
+      background: #d4d4d4;
+      border-color: #d4d4d4;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .form-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    .form-success {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #3dd68c;
+      padding: 14px 0;
+    }
+
+    /* DIVIDER */
+    .section-divide {
+      border: none;
+      border-top: 1px solid var(--border);
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* PROOF SECTION */
+    .proof {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 64px 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .proof-item {
+      padding: 32px 32px 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .proof-item:nth-child(even) {
+      padding: 32px 0 32px 32px;
+      border-left: 1px solid var(--border);
+    }
+
+    .proof-item:nth-last-child(-n+2) {
+      border-bottom: none;
+    }
+
+    .proof-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .proof-heading {
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    .proof-body {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .proof-body code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #999;
+      background: var(--bg-subtle);
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 100%;
+    }
+
+    .footer-left {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-link {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-link:hover {
+      color: var(--text-secondary);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 700px) {
+      nav { padding: 16px 20px; }
+      .nav-right { gap: 16px; }
+      .hero { padding: 64px 20px 56px; }
+      .hero-h1 { letter-spacing: -1px; }
+      .code-hero { padding: 20px; font-size: 12px; overflow-x: auto; }
+      .proof { grid-template-columns: 1fr; padding: 40px 20px; }
+      .proof-item, .proof-item:nth-child(even) {
+        padding: 28px 0;
+        border-left: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .proof-item:last-child { border-bottom: none; }
+      .form-row { flex-direction: column; max-width: 100%; }
+      .email-input { border-right: 1px solid var(--border-mid); border-bottom: none; }
+      .submit-btn { height: 44px; }
+      footer { flex-direction: column; gap: 16px; align-items: flex-start; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">promptcache<span>.py</span></div>
+    <div class="nav-right">
+      <span class="nav-badge">private beta</span>
+      <a href="https://github.com" class="nav-link">GitHub</a>
+      <a href="https://twitter.com" class="nav-link">X</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+
+      <p class="hero-eyebrow">// LLM cost infrastructure</p>
+
+      <h1 class="hero-h1">
+        Your LLM API bill<br/>
+        is <em>full of duplicates.</em>
+      </h1>
+
+      <p class="hero-sub">
+        promptcache intercepts redundant calls before they reach the API.
+        Exact match, semantic deduplication, zero gateway required.
+        One decorator.
+      </p>
+
+      <!-- CODE BLOCK -->
+      <div class="code-hero" role="img" aria-label="promptcache integration example">
+        <code>
+          <span class="code-line"><span class="tok-comment"># before: every call hits the API</span></span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-kw">from</span> <span class="tok-fn">openai</span> <span class="tok-kw">import</span> <span class="tok-fn">OpenAI</span></span>
+          <span class="code-line"><span class="tok-fn">client</span> = <span class="tok-fn">OpenAI</span>()</span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-kw">def</span> <span class="tok-fn">ask</span>(<span class="tok-param">prompt</span>):</span>
+          <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="tok-kw">return</span> <span class="tok-fn">client</span>.chat.completions.create(...)</span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-comment"># after: cache handles the rest</span></span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-kw">from</span> <span class="tok-fn">promptcache</span> <span class="tok-kw">import</span> <span class="tok-dec">cache</span></span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-dec">@cache</span></span>
+          <span class="code-line"><span class="tok-kw">def</span> <span class="tok-fn">ask</span>(<span class="tok-param">prompt</span>):</span>
+          <span class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="tok-kw">return</span> <span class="tok-fn">client</span>.chat.completions.create(...)</span>
+          <span class="code-line tok-dim">&nbsp;</span>
+          <span class="code-line"><span class="tok-comment"># exact match  → </span><span class="tok-hit">cache hit   0ms   $0.00</span></span>
+          <span class="code-line"><span class="tok-comment"># ~same prompt → </span><span class="tok-hit">semantic hit  4ms   $0.00</span></span>
+          <span class="code-line"><span class="tok-comment"># new prompt   → </span><span class="tok-miss">api call   820ms  $0.003</span></span>
+        </code>
+      </div>
+
+      <!-- WAITLIST FORM -->
+      <div class="form-section">
+        <div class="form-row" id="form-row">
+          <input
+            type="email"
+            class="email-input"
+            id="email-input"
+            placeholder="you@company.com"
+            autocomplete="email"
+          />
+          <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">
+            Join waitlist
+          </button>
+        </div>
+        <p class="form-note" id="form-note">Early access for teams running LLMs in production.</p>
+        <p class="form-success" id="form-success">You're on the list. We'll reach out before launch.</p>
+      </div>
+
+    </section>
+
+    <hr class="section-divide" />
+
+    <!-- PROOF GRID -->
+    <div class="proof">
+
+      <div class="proof-item">
+        <p class="proof-label">how it works</p>
+        <h3 class="proof-heading">Two-tier cache, one check</h3>
+        <p class="proof-body">
+          Every call runs through an exact match in SQLite, then a semantic search in ChromaDB.
+          Hit either layer and the response is returned immediately —
+          no network, no tokens, no cost. Miss both and the real call goes through and writes back.
+        </p>
+      </div>
+
+      <div class="proof-item">
+        <p class="proof-label">integration</p>
+        <h3 class="proof-heading">Decorator-first, nothing to rearchitect</h3>
+        <p class="proof-body">
+          <code>@cache</code> works on sync functions, async functions, and streaming responses.
+          Pluggable embedder protocol — use <code>SentenceTransformer</code> locally
+          or the OpenAI embedding API. No gateway, no proxy, no changed call signatures.
+        </p>
+      </div>
+
+      <div class="proof-item">
+        <p class="proof-label">vs alternatives</p>
+        <h3 class="proof-heading">GPTCache is abandoned. Gateways are overhead.</h3>
+        <p class="proof-body">
+          Every other caching layer either stopped shipping or requires you to route traffic
+          through infrastructure you don't own.
+          promptcache is a Python library. <code>pip install promptcache</code>.
+          Your prompts stay on your machine.
+        </p>
+      </div>
+
+      <div class="proof-item">
+        <p class="proof-label">MCP server</p>
+        <h3 class="proof-heading">Your editor can see the cache too</h3>
+        <p class="proof-body">
+          A read-only MCP server ships with the library.
+          Cursor and Claude Code can inspect hit rates, cost savings, and cache state
+          without leaving the editor. The only LLM caching layer with native MCP support.
+        </p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <hr class="section-divide" />
+
+  <footer>
+    <span class="footer-left">promptcache · built in public</span>
+    <div class="footer-right">
+      <a href="https://twitter.com" class="footer-link">@jaybhatt_ on X</a>
+      <a href="https://github.com" class="footer-link">GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    function handleSubmit() {
+      const input = document.getElementById('email-input');
+      const btn = document.getElementById('submit-btn');
+      const note = document.getElementById('form-note');
+      const success = document.getElementById('form-success');
+      const email = input.value.trim();
+
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        input.style.borderColor = '#4a1c1c';
+        input.focus();
+        setTimeout(() => { input.style.borderColor = ''; }, 1400);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      // Replace this fetch with your actual waitlist endpoint
+      setTimeout(() => {
+        document.getElementById('form-row').style.display = 'none';
+        note.style.display = 'none';
+        success.style.display = 'block';
+      }, 500);
+    }
+
+    document.getElementById('email-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') handleSubmit();
+    });
+  </script>
+
+</body>
+</html>

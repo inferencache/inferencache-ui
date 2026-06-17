@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>promptcache</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+
+:root{
+  /* Surfaces — clear 4-step hierarchy */
+  --s0: #080a0d;   /* page bg */
+  --s1: #0e1117;   /* sidebar */
+  --s2: #13171f;   /* topbar / metric strip */
+  --s3: #181d27;   /* cards */
+  --s4: #1e2332;   /* card hover / inputs */
+  --s5: #252b3b;   /* input focus / active */
+
+  /* Borders */
+  --b1: rgba(255,255,255,0.05);
+  --b2: rgba(255,255,255,0.09);
+  --b3: rgba(255,255,255,0.14);
+
+  /* Text — wide weight range */
+  --t1: #f0f2f7;   /* primary */
+  --t2: #7a8099;   /* secondary */
+  --t3: #3d4459;   /* tertiary / labels */
+
+  /* Semantic — one job each */
+  --green:  #10d9a0;   /* hits / positive */
+  --amber:  #f5a623;   /* semantic / warning */
+  --red:    #f06a6a;   /* miss / danger */
+  --purple: #9d7fea;   /* tokens */
+  --blue:   #4f8ef7;   /* info / links */
+
+  /* The ONE orange — primary action only */
+  --action: #f97316;
+
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r:    6px;
+  --r-lg: 10px;
+}
+
+body{background:var(--s0);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ─── Layout ─────────────────────────────────── */
+.shell{display:flex;height:100vh}
+
+/* ─── Sidebar ────────────────────────────────── */
+.sidebar{
+  width:252px;flex-shrink:0;
+  background:var(--s1);
+  border-right:1px solid var(--b1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+.logo{
+  display:flex;align-items:center;gap:9px;
+  padding:15px 16px;
+  border-bottom:1px solid var(--b1);
+}
+.logo-icon{
+  width:26px;height:26px;border-radius:7px;
+  background:var(--action);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-icon svg{width:13px;height:13px;color:#fff}
+.logo-name{
+  font-size:13.5px;font-weight:500;letter-spacing:-.3px;color:var(--t1);
+}
+.logo-name span{color:var(--t3);font-weight:400}
+.live-chip{
+  margin-left:auto;
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:500;
+  color:var(--green);
+  background:rgba(16,217,160,0.07);
+  border:1px solid rgba(16,217,160,0.15);
+  border-radius:20px;padding:2px 8px;
+}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Nav */
+.nav{padding:10px 8px 6px;display:flex;flex-direction:column;gap:1px}
+.nav-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 9px;border-radius:var(--r);
+  font-size:12.5px;color:var(--t2);
+  background:transparent;border:none;font-family:var(--sans);
+  cursor:pointer;width:100%;text-align:left;
+  transition:background .15s,color .15s;
+  position:relative;
+}
+.nav-item svg{width:14px;height:14px;flex-shrink:0}
+.nav-item:hover{background:var(--s3);color:var(--t1)}
+.nav-item.active{color:var(--t1);background:var(--s3)}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:2px;height:14px;background:var(--green);border-radius:2px;
+}
+.nav-count{
+  margin-left:auto;font-size:10px;
+  background:var(--s4);border:1px solid var(--b2);
+  border-radius:10px;padding:1px 6px;color:var(--t3);
+}
+
+/* Section heading */
+.sh{
+  padding:14px 16px 5px;
+  font-size:9.5px;font-weight:500;
+  color:var(--t3);text-transform:uppercase;letter-spacing:.8px;
+}
+
+/* Config */
+.cfg{flex:1;overflow-y:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:5px}
+.cfg::-webkit-scrollbar{width:2px}
+.cfg::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+.cg{background:var(--s3);border:1px solid var(--b1);border-radius:var(--r-lg);padding:11px 12px}
+.cl{font-size:10px;color:var(--t3);margin-bottom:6px;font-weight:500;letter-spacing:.3px;text-transform:uppercase}
+
+.tabs{display:flex;background:var(--s0);border-radius:var(--r);padding:2px;gap:2px}
+.tab-btn{
+  flex:1;padding:5px;border-radius:5px;
+  font-size:11.5px;font-weight:500;font-family:var(--sans);
+  cursor:pointer;border:none;background:transparent;color:var(--t2);
+  transition:all .15s;
+}
+.tab-btn.active{background:var(--s4);color:var(--t1)}
+
+select,input[type=number]{
+  width:100%;padding:6px 8px;
+  border-radius:var(--r);
+  border:1px solid var(--b2);
+  background:var(--s4);
+  color:var(--t1);font-family:var(--sans);font-size:12px;
+  outline:none;transition:border-color .15s;
+  -webkit-appearance:none;
+}
+select:focus,input[type=number]:focus{border-color:var(--b3)}
+select option{background:var(--s4)}
+
+/* Repeat row */
+.rrow{display:flex;gap:3px;margin-top:5px}
+.rb{
+  flex:1;padding:4px 0;border-radius:5px;
+  font-size:11px;font-weight:500;font-family:var(--sans);
+  border:1px solid var(--b1);background:transparent;
+  color:var(--t3);cursor:pointer;transition:all .15s;
+}
+.rb:hover{border-color:var(--b2);color:var(--t2)}
+.rb.on{background:var(--s4);color:var(--t1);border-color:var(--b2)}
+
+/* Range */
+.rng{display:flex;align-items:center;gap:8px}
+.rng input[type=range]{
+  flex:1;height:2px;
+  -webkit-appearance:none;appearance:none;
+  background:var(--b2);border-radius:2px;cursor:pointer;outline:none;
+}
+.rng input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--t1);cursor:pointer;border:none;
+  transition:transform .15s;
+}
+.rng input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.rng-val{
+  font-size:12px;font-weight:500;font-family:var(--mono);
+  color:var(--t1);min-width:32px;text-align:right;
+}
+
+.upload-zone{
+  margin-top:6px;padding:7px;
+  border:1px dashed var(--b2);border-radius:var(--r);
+  text-align:center;font-size:11px;color:var(--t3);
+  cursor:pointer;transition:all .15s;
+}
+.upload-zone:hover{border-color:var(--b3);color:var(--t2)}
+
+/* Run button */
+.run-btn{
+  margin:8px 8px 5px;padding:10px;
+  border-radius:var(--r);
+  background:var(--action);color:#fff;
+  font-size:13px;font-weight:500;font-family:var(--sans);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:opacity .15s,transform .1s;letter-spacing:-.1px;
+}
+.run-btn:hover{opacity:.88}
+.run-btn:active{transform:scale(.98)}
+.run-btn svg{width:13px;height:13px}
+
+.clr-btn{
+  margin:0 8px 10px;padding:7px;
+  border-radius:var(--r);background:transparent;
+  color:var(--t3);font-size:11.5px;font-family:var(--sans);
+  border:1px solid var(--b1);cursor:pointer;
+  width:calc(100% - 16px);transition:all .15s;
+}
+.clr-btn:hover{color:var(--red);border-color:rgba(240,106,106,.2)}
+
+/* Past runs */
+.run-scroll{overflow-y:auto;max-height:168px;padding:0 8px 10px}
+.run-scroll::-webkit-scrollbar{width:2px}
+.run-scroll::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.ri{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 8px;border-radius:var(--r);cursor:pointer;
+  transition:background .1s;
+}
+.ri:hover{background:var(--s3)}
+.ri-meta{flex:1;min-width:0}
+.ri-id{font-family:var(--mono);font-size:9.5px;color:var(--t3)}
+.ri-name{font-size:12px;color:var(--t1);font-weight:500;margin-top:1px}
+.ri-info{font-size:10px;color:var(--t3);margin-top:1px}
+.hi-badge{
+  font-size:10px;font-weight:500;border-radius:5px;padding:2px 7px;flex-shrink:0;
+}
+.hi-good{background:rgba(16,217,160,.08);color:var(--green);border:1px solid rgba(16,217,160,.15)}
+.hi-perfect{background:rgba(16,217,160,.12);color:var(--green);border:1px solid rgba(16,217,160,.2)}
+
+/* ─── Main ───────────────────────────────────── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* Topbar */
+.topbar{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 16px;
+  background:var(--s2);
+  border-bottom:1px solid var(--b1);
+  flex-shrink:0;
+}
+.top-tabs{display:flex;gap:1px;flex:1}
+.top-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:var(--r);
+  font-size:12px;font-family:var(--sans);
+  color:var(--t2);cursor:pointer;border:none;
+  background:transparent;transition:all .15s;
+}
+.top-tab:hover{background:var(--s3);color:var(--t1)}
+.top-tab.active{background:var(--s4);color:var(--t1)}
+.top-tab svg{width:13px;height:13px}
+.ping-chip{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--t3);
+  background:var(--s3);border:1px solid var(--b1);
+  border-radius:20px;padding:3px 9px;
+}
+.top-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:var(--r);
+  font-size:11.5px;font-family:var(--sans);
+  border:1px solid var(--b2);
+  background:transparent;color:var(--t2);cursor:pointer;
+  transition:all .15s;
+}
+.top-btn:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.top-btn svg{width:12px;height:12px}
+
+/* ─── Metric strip ────────────────────────────── */
+.mstrip{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  background:var(--s2);
+  border-bottom:1px solid var(--b1);
+  flex-shrink:0;
+}
+.mc{
+  padding:14px 16px;
+  border-right:1px solid var(--b1);
+  display:flex;flex-direction:column;gap:4px;
+}
+.mc:last-child{border-right:none}
+.mc-label{
+  font-size:9.5px;font-weight:500;
+  color:var(--t3);text-transform:uppercase;letter-spacing:.7px;
+}
+.mc-val{
+  font-size:26px;font-weight:300;font-family:var(--mono);
+  line-height:1;letter-spacing:-1px;
+  color:var(--t1);
+  transition:color .4s;
+}
+/* Each metric gets ONE semantic color */
+.mc-val.v-green {color:var(--green)}
+.mc-val.v-amber {color:var(--amber)}
+.mc-val.v-purple{color:var(--purple)}
+
+.mc-sub{font-size:10px;color:var(--t3);font-weight:400}
+
+/* ─── Content ─────────────────────────────────── */
+.content{
+  flex:1;overflow-y:auto;padding:12px 14px;
+  display:flex;flex-direction:column;gap:10px;
+  background:var(--s0);
+}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* Cards */
+.card{
+  background:var(--s3);
+  border:1px solid var(--b1);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+}
+.cp{padding:14px 16px}
+
+.card-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.card-ttl{
+  font-size:11px;font-weight:500;color:var(--t2);
+  display:flex;align-items:center;gap:6px;letter-spacing:.1px;
+}
+.card-ttl svg{width:12px;height:12px;color:var(--t3)}
+.leg{display:flex;align-items:center;gap:10px}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3)}
+.leg-d{width:16px;height:2px;border-radius:1px}
+
+/* Hit bar */
+.bar-track{
+  height:6px;border-radius:3px;
+  background:var(--s0);overflow:hidden;display:flex;
+}
+.bseg{height:100%;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bs-exact{background:var(--green)}
+.bs-sem  {background:var(--amber)}
+.bs-miss {background:var(--b2)}
+.bar-foot{display:flex;justify-content:space-between;margin-top:7px;font-size:10.5px;color:var(--t3)}
+
+/* Charts */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chart-wrap{position:relative;height:112px;margin-top:8px}
+canvas{width:100%!important;height:100%!important}
+
+/* Log */
+.log-hdr{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 14px;border-bottom:1px solid var(--b1);
+}
+.log-ttl{font-size:11.5px;font-weight:500;color:var(--t2)}
+.log-n{font-size:10.5px;color:var(--t3)}
+.fpills{display:flex;gap:3px;margin-left:auto}
+.fp{
+  padding:3px 9px;border-radius:20px;
+  font-size:10.5px;font-family:var(--sans);
+  border:1px solid var(--b1);background:transparent;
+  color:var(--t3);cursor:pointer;transition:all .15s;
+}
+.fp:hover{border-color:var(--b2);color:var(--t2)}
+.fp.on{background:var(--s4);color:var(--t1);border-color:var(--b2)}
+
+.log-cols{
+  display:grid;
+  grid-template-columns:28px 58px 64px 52px 84px 62px 1fr;
+  gap:8px;padding:5px 14px;
+  font-size:9px;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.6px;font-weight:500;
+  border-bottom:1px solid var(--b1);
+}
+.log-rows{overflow-y:auto;max-height:200px}
+.log-rows::-webkit-scrollbar{width:2px}
+.log-rows::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+.lr{
+  display:grid;
+  grid-template-columns:28px 58px 64px 52px 84px 62px 1fr;
+  gap:8px;padding:6px 14px;
+  font-size:11.5px;
+  border-bottom:1px solid rgba(255,255,255,.03);
+  align-items:center;cursor:pointer;
+  transition:background .1s;
+  animation:rowIn .2s ease forwards;
+}
+@keyframes rowIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.lr:hover{background:var(--s4)}
+.lr:last-child{border-bottom:none}
+
+.idx{color:var(--t3);font-family:var(--mono);font-size:10px}
+.badge{
+  display:inline-flex;align-items:center;padding:2px 6px;
+  border-radius:4px;font-size:9.5px;font-weight:500;letter-spacing:.4px;
+}
+.b-e{background:rgba(16,217,160,.1); color:var(--green)}
+.b-s{background:rgba(245,166,35,.1); color:var(--amber)}
+.b-m{background:rgba(240,106,106,.08);color:var(--red)}
+
+.rlat{font-family:var(--mono);color:var(--t2);font-size:11px}
+.rtok{font-family:var(--mono);color:var(--purple);font-size:11px}
+.rcst{font-family:var(--mono);font-size:11px}
+.rcst.paid{color:var(--action)}
+.rcst.free{color:var(--t3)}
+.rsim{font-family:var(--mono);color:var(--t2);font-size:11px}
+.rprompt{color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+
+.empty{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:36px;color:var(--t3);gap:7px;
+}
+.empty svg{width:24px;height:24px;opacity:.25}
+.empty p{font-size:12px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══ SIDEBAR ══════════════════════════════════ -->
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="2,10 5,6 8,12 11,4 14,8"/>
+      </svg>
+    </div>
+    <span class="logo-name">promptcache <span>/ dashboard</span></span>
+    <div class="live-chip"><div class="dot"></div>live</div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Cache testing
+      <span class="nav-count">live</span>
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      Saved runs
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+      Analytics
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+      Tuning
+    </button>
+  </nav>
+
+  <div class="sh">Configuration</div>
+  <div class="cfg">
+
+    <div class="cg">
+      <div class="cl">Provider</div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setProvider(this,'openai')">OpenAI</button>
+        <button class="tab-btn" onclick="setProvider(this,'anthropic')">Anthropic</button>
+      </div>
+      <select id="mdl" style="margin-top:6px">
+        <option>GPT-4o Mini</option>
+        <option>GPT-4o</option>
+        <option>GPT-3.5 Turbo</option>
+      </select>
+    </div>
+
+    <div class="cg">
+      <div class="cl">Suite</div>
+      <select>
+        <option>general_qa</option>
+        <option>coding</option>
+        <option>summarization</option>
+      </select>
+      <div style="margin-top:9px">
+        <div class="cl">Repeat factor</div>
+        <div class="rrow">
+          <button class="rb" onclick="setR(this)">1×</button>
+          <button class="rb on" onclick="setR(this)">2×</button>
+          <button class="rb" onclick="setR(this)">3×</button>
+          <button class="rb" onclick="setR(this)">4×</button>
+          <button class="rb" onclick="setR(this)">5×</button>
+        </div>
+      </div>
+      <div class="upload-zone">↑ Upload custom suite (.json / .csv)</div>
+    </div>
+
+    <div class="cg">
+      <div class="cl">Similarity threshold</div>
+      <div class="rng">
+        <input type="range" min="0.5" max="1" step="0.01" value="0.85"
+          oninput="document.getElementById('tv').textContent=parseFloat(this.value).toFixed(2)">
+        <span class="rng-val" id="tv">0.85</span>
+      </div>
+      <div style="margin-top:8px">
+        <div class="cl">Pause between calls</div>
+        <input type="number" value="200" min="0" max="5000" step="50">
+      </div>
+    </div>
+
+  </div>
+
+  <button class="run-btn" id="run-btn" onclick="startRun()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <span id="run-label">Run test suite</span>
+  </button>
+  <button class="clr-btn">Clear cache for this model</button>
+
+  <div class="sh" style="display:flex;align-items:center;gap:6px">
+    Past runs
+    <span style="background:var(--s4);border:1px solid var(--b2);border-radius:10px;padding:1px 6px;font-size:9.5px;color:var(--t3)">9</span>
+  </div>
+  <div class="run-scroll">
+    <div class="ri">
+      <div class="ri-meta">
+        <div class="ri-id">973f8697</div>
+        <div class="ri-name">coding</div>
+        <div class="ri-info">gpt-4o · $0.0363 · Jun 14, 08:55</div>
+      </div>
+      <span class="hi-badge hi-good">69%</span>
+    </div>
+    <div class="ri">
+      <div class="ri-meta">
+        <div class="ri-id">0e085b26</div>
+        <div class="ri-name">general_qa</div>
+        <div class="ri-info">gpt-4o · $0.0303 · Jun 14, 08:53</div>
+      </div>
+      <span class="hi-badge hi-good">64%</span>
+    </div>
+    <div class="ri">
+      <div class="ri-meta">
+        <div class="ri-id">a6bbcfef</div>
+        <div class="ri-name">general_qa</div>
+        <div class="ri-info">gpt-4o-mini · $0.00 · Jun 14</div>
+      </div>
+      <span class="hi-badge hi-perfect">100%</span>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ══ MAIN ═════════════════════════════════════ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="top-tabs">
+      <button class="top-tab active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Cache testing
+      </button>
+      <button class="top-tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Saved runs
+      </button>
+    </div>
+    <div class="ping-chip">
+      <div class="dot"></div>
+      localhost:8000 · <span id="ping">54ms</span>
+    </div>
+    <button class="top-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      chart-output.com
+    </button>
+    <button class="top-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      API keys
+    </button>
+  </div>
+
+  <!-- Metric strip -->
+  <div class="mstrip">
+    <div class="mc">
+      <div class="mc-label">Total calls</div>
+      <div class="mc-val" id="m0">0</div>
+      <div class="mc-sub">this run</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Hit rate</div>
+      <div class="mc-val v-green" id="m1">—</div>
+      <div class="mc-sub" id="m1s">0 hits · 0 misses</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Exact hits</div>
+      <div class="mc-val v-green" id="m2">0</div>
+      <div class="mc-sub">SHA-256 match</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Semantic hits</div>
+      <div class="mc-val v-amber" id="m3">0</div>
+      <div class="mc-sub">embedding match</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Tokens saved</div>
+      <div class="mc-val v-purple" id="m4">0</div>
+      <div class="mc-sub">via cache</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Cost saved</div>
+      <div class="mc-val" id="m5">—</div>
+      <div class="mc-sub">vs all-API</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Hit bar -->
+    <div class="card cp">
+      <div class="card-hdr">
+        <div class="card-ttl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Hit breakdown
+        </div>
+        <div class="leg">
+          <div class="leg-i"><div class="leg-d" style="background:var(--green)"></div>Exact</div>
+          <div class="leg-i"><div class="leg-d" style="background:var(--amber)"></div>Semantic</div>
+          <div class="leg-i"><div class="leg-d" style="background:var(--b2)"></div>Miss</div>
+        </div>
+      </div>
+      <div class="bar-track">
+        <div class="bseg bs-exact" id="be" style="width:0%"></div>
+        <div class="bseg bs-sem"   id="bs" style="width:0%"></div>
+        <div class="bseg bs-miss"  id="bm" style="width:100%"></div>
+      </div>
+      <div class="bar-foot">
+        <span id="blab">Run a suite to see breakdown</span>
+        <span id="bpct"></span>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="card cp">
+        <div class="card-hdr">
+          <div class="card-ttl">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Latency per call
+          </div>
+          <div class="leg">
+            <div class="leg-i"><div class="leg-d" style="background:var(--green)"></div>Cache</div>
+            <div class="leg-i"><div class="leg-d" style="background:var(--red)"></div>API</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="lc"></canvas></div>
+      </div>
+      <div class="card cp">
+        <div class="card-hdr">
+          <div class="card-ttl">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Cost per call
+          </div>
+          <div class="leg">
+            <div class="leg-i"><div class="leg-d" style="background:var(--green)"></div>$0 cached</div>
+            <div class="leg-i"><div class="leg-d" style="background:var(--action)"></div>Billed</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="cc"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card">
+      <div class="log-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px;color:var(--t3)"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span class="log-ttl">Call log</span>
+        <span class="log-n" id="ln"></span>
+        <div class="fpills">
+          <button class="fp on" onclick="setF(this,'all')">All <span id="fa">0</span></button>
+          <button class="fp" onclick="setF(this,'exact')">Exact <span id="fe">0</span></button>
+          <button class="fp" onclick="setF(this,'semantic')">Semantic <span id="fs">0</span></button>
+          <button class="fp" onclick="setF(this,'miss')">Miss <span id="fm">0</span></button>
+        </div>
+      </div>
+      <div class="log-cols">
+        <span>#</span><span>result</span><span>latency</span>
+        <span>tokens</span><span>cost</span><span>sim</span><span>prompt</span>
+      </div>
+      <div class="log-rows" id="log-rows">
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <p>Run a suite to see results</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Interactions ──────────────────────────────────────────────────────────
+function setProvider(b,p){
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const s=document.getElementById('mdl');
+  s.innerHTML=p==='openai'
+    ?'<option>GPT-4o Mini</option><option>GPT-4o</option><option>GPT-3.5 Turbo</option>'
+    :'<option>Claude 3 Haiku</option><option>Claude 3.5 Sonnet</option>';
+}
+function setR(b){document.querySelectorAll('.rb').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+
+document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+}));
+document.querySelectorAll('.top-tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.top-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+}));
+
+let activeF='all';
+function setF(b,f){
+  document.querySelectorAll('.fp').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');activeF=f;renderRows();
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────
+const CD={
+  responsive:true,maintainAspectRatio:false,
+  animation:{duration:350,easing:'easeOutCubic'},
+  plugins:{legend:{display:false},tooltip:{
+    backgroundColor:'#181d27',borderColor:'rgba(255,255,255,.08)',borderWidth:1,
+    titleColor:'#7a8099',bodyColor:'#f0f2f7',padding:8,cornerRadius:6,displayColors:false
+  }},
+  scales:{
+    x:{display:false},
+    y:{
+      display:true,
+      grid:{color:'rgba(255,255,255,.03)',drawBorder:false},
+      ticks:{color:'#3d4459',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:3},
+      border:{display:false}
+    }
+  }
+};
+
+const lChart=new Chart(document.getElementById('lc').getContext('2d'),{
+  type:'line',
+  data:{labels:[],datasets:[
+    {label:'API',data:[],borderColor:'#f06a6a',backgroundColor:'rgba(240,106,106,.05)',
+     borderWidth:1.5,pointRadius:2,pointBackgroundColor:'#f06a6a',fill:true,tension:.35,spanGaps:false},
+    {label:'Cache',data:[],borderColor:'#10d9a0',backgroundColor:'rgba(16,217,160,.05)',
+     borderWidth:1.5,pointRadius:2,pointBackgroundColor:'#10d9a0',fill:true,tension:.35,spanGaps:false},
+  ]},
+  options:{...CD,scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>v+'ms'}}}}
+});
+
+const cChart=new Chart(document.getElementById('cc').getContext('2d'),{
+  type:'bar',
+  data:{labels:[],datasets:[{label:'cost',data:[],backgroundColor:[],borderRadius:2,borderSkipped:false}]},
+  options:{...CD,scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>v===0?'$0':'$'+v.toFixed(5)}}}}
+});
+
+// ── Data ──────────────────────────────────────────────────────────────────
+const SAMPLE=[
+  {i:1,t:'miss',    lat:834,tok:312,cost:.000187,sim:null,  p:"What is the capital of France?"},
+  {i:2,t:'miss',    lat:921,tok:287,cost:.000172,sim:null,  p:"What is machine learning?"},
+  {i:3,t:'miss',    lat:756,tok:445,cost:.000267,sim:null,  p:"Write a Python function to reverse a string."},
+  {i:4,t:'exact',   lat:3,  tok:312,cost:0,      sim:null,  p:"What is the capital of France?"},
+  {i:5,t:'semantic',lat:18, tok:287,cost:0,      sim:.923,  p:"What is the capital city of France?"},
+  {i:6,t:'exact',   lat:2,  tok:287,cost:0,      sim:null,  p:"What is machine learning?"},
+  {i:7,t:'semantic',lat:21, tok:445,cost:0,      sim:.891,  p:"How do you reverse a string in Python?"},
+  {i:8,t:'miss',    lat:689,tok:334,cost:.0002,  sim:null,  p:"Explain quantum computing briefly."},
+  {i:9,t:'semantic',lat:16, tok:334,cost:0,      sim:.877,  p:"What is quantum computing?"},
+  {i:10,t:'miss',   lat:802,tok:298,cost:.000179,sim:null,  p:"What is a REST API?"},
+  {i:11,t:'exact',  lat:2,  tok:298,cost:0,      sim:null,  p:"What is a REST API?"},
+  {i:12,t:'semantic',lat:19,tok:298,cost:0,      sim:.908,  p:"Explain what a RESTful API is."},
+];
+
+let rows=[],running=false,ai=0;
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderRows(){
+  const f=activeF==='all'?rows:rows.filter(r=>r.t===activeF);
+  const el=document.getElementById('log-rows');
+  if(!f.length){
+    el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg><p>No ${activeF==='all'?'':activeF+' '}results yet</p></div>`;
+    return;
+  }
+  el.innerHTML=f.map(d=>{
+    const [cls,lbl]=d.t==='exact'?['b-e','EXACT']:d.t==='semantic'?['b-s','SEM']:['b-m','MISS'];
+    const simV=d.t==='exact'?'1.000':d.sim?d.sim.toFixed(3):'—';
+    const costV=d.cost>0?'$'+d.cost.toFixed(6):'$0.000000';
+    const costCls=d.cost>0?'paid':'free';
+    return `<div class="lr">
+      <span class="idx">${d.i}</span>
+      <span><span class="badge ${cls}">${lbl}</span></span>
+      <span class="rlat">${d.lat}ms</span>
+      <span class="rtok">${d.tok}</span>
+      <span class="rcst ${costCls}">${costV}</span>
+      <span class="rsim">${simV}</span>
+      <span class="rprompt">${d.p}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateMetrics(){
+  const tot=rows.length,ex=rows.filter(r=>r.t==='exact').length,
+        se=rows.filter(r=>r.t==='semantic').length,mi=rows.filter(r=>r.t==='miss').length,
+        hits=ex+se,rate=tot?Math.round(hits/tot*100):null,
+        tokS=rows.filter(r=>r.t!=='miss').reduce((a,d)=>a+d.tok,0),
+        cstS=rows.filter(r=>r.t!=='miss').reduce((a,d)=>a+d.tok*.0000006,0);
+
+  document.getElementById('m0').textContent=tot;
+  document.getElementById('m1').textContent=rate!==null?rate+'%':'—';
+  document.getElementById('m1s').textContent=hits+' hits · '+mi+' misses';
+  document.getElementById('m2').textContent=ex;
+  document.getElementById('m3').textContent=se;
+  document.getElementById('m4').textContent=tokS.toLocaleString();
+  document.getElementById('m5').textContent=cstS>0?'$'+cstS.toFixed(4):'—';
+  document.getElementById('ln').textContent=tot?tot+' events':'';
+  document.getElementById('fa').textContent=tot;
+  document.getElementById('fe').textContent=ex;
+  document.getElementById('fs').textContent=se;
+  document.getElementById('fm').textContent=mi;
+
+  // Animate cost saved green when it gets big
+  const m5=document.getElementById('m5');
+  if(cstS>0){m5.style.color='var(--green)'}
+
+  if(tot>0){
+    const ep=Math.round(ex/tot*100),sp=Math.round(se/tot*100),mp=100-ep-sp;
+    document.getElementById('be').style.width=ep+'%';
+    document.getElementById('bs').style.width=sp+'%';
+    document.getElementById('bm').style.width=mp+'%';
+    document.getElementById('blab').textContent=ex+' exact · '+se+' semantic · '+mi+' miss';
+    document.getElementById('bpct').textContent=rate+'% hit rate';
+  }
+}
+
+function updateCharts(d){
+  const lbl='#'+d.i;
+  lChart.data.labels.push(lbl);
+  lChart.data.datasets[0].data.push(d.t==='miss'?d.lat:null);
+  lChart.data.datasets[1].data.push(d.t!=='miss'?d.lat:null);
+  lChart.update('active');
+  cChart.data.labels.push(lbl);
+  cChart.data.datasets[0].data.push(d.cost);
+  cChart.data.datasets[0].backgroundColor.push(d.cost>0?'rgba(249,115,22,.75)':'rgba(16,217,160,.5)');
+  cChart.update('active');
+}
+
+// ── Run loop ──────────────────────────────────────────────────────────────
+function startRun(){
+  if(running)return;
+  running=true;rows=[];ai=0;activeF='all';
+  document.querySelectorAll('.fp').forEach((b,i)=>b.classList.toggle('on',i===0));
+  ['m0','m2','m3','m4'].forEach(id=>document.getElementById(id).textContent='0');
+  ['m1','m5'].forEach(id=>{document.getElementById(id).textContent='—';document.getElementById(id).style.color=''});
+  document.getElementById('m1s').textContent='0 hits · 0 misses';
+  document.getElementById('blab').textContent='Run a suite to see breakdown';
+  document.getElementById('bpct').textContent='';
+  ['be','bs'].forEach(id=>document.getElementById(id).style.width='0%');
+  document.getElementById('bm').style.width='100%';
+  lChart.data.labels=[];lChart.data.datasets.forEach(d=>d.data=[]);lChart.update();
+  cChart.data.labels=[];cChart.data.datasets[0].data=[];cChart.data.datasets[0].backgroundColor=[];cChart.update();
+  document.getElementById('log-rows').innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="animation:blink 1s infinite"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>Running suite…</p></div>`;
+  document.getElementById('run-label').textContent='Running…';
+
+  function tick(){
+    if(ai>=SAMPLE.length){
+      running=false;
+      document.getElementById('run-label').textContent='Run test suite';
+      return;
+    }
+    const d=SAMPLE[ai++];
+    rows.push(d);
+    updateMetrics();
+    updateCharts(d);
+    renderRows();
+    const lb=document.getElementById('log-rows');
+    lb.scrollTop=lb.scrollHeight;
+    setTimeout(tick,180+Math.random()*160);
+  }
+  setTimeout(tick,280);
+}
+
+// Auto-demo
+startRun();
+</script>
+</body>
+</html>
