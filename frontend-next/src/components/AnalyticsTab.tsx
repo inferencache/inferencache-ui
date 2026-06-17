@@ -6,11 +6,11 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  fetchHitRate, fetchCostSaved, fetchEndpoints, fmtCost,
+  fetchHitRate, fetchCostSaved, fetchEndpoints, fetchTierBreakdown, fmtCost,
 } from "@/lib/api";
 import { InfoTip, TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
-import type { CostSavedPoint, EndpointRow, HitRateBucket, TimeWindow } from "@/types";
+import type { CostSavedPoint, EndpointRow, HitRateBucket, TierBreakdownRow, TimeWindow } from "@/types";
 import { WINDOW_HOURS } from "@/types";
 
 interface Props {
@@ -30,20 +30,23 @@ export function AnalyticsTab({ model }: Props) {
   const [hitData,   setHitData]   = useState<HitRateBucket[]>([]);
   const [costData,  setCostData]  = useState<CostSavedPoint[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointRow[]>([]);
+  const [tierData,  setTierData]  = useState<TierBreakdownRow[]>([]);
   const [loading,   setLoading]   = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const hours = WINDOW_HOURS[window];
     const bucket = hours <= 6 ? 5 : hours <= 24 ? 30 : hours <= 168 ? 360 : 1440;
-    const [h, c, e] = await Promise.all([
+    const [h, c, e, t] = await Promise.all([
       fetchHitRate(model, hours, bucket),
       fetchCostSaved(model, hours),
       fetchEndpoints(model, hours),
+      fetchTierBreakdown(model, hours),
     ]);
     setHitData(h);
     setCostData(c);
     setEndpoints(e);
+    setTierData(t);
     setLoading(false);
   }, [model, window]);
 
@@ -150,6 +153,48 @@ export function AnalyticsTab({ model }: Props) {
                 />
               </AreaChart>
             </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Savings by tier */}
+      <div className="ge-card">
+        <div className="card-header">
+          <div className="card-title">Savings by tier</div>
+          <div className="card-subtitle">
+            Breakdown of tokens and cost saved per caching layer
+          </div>
+        </div>
+        <div className="card-body p-0">
+          {tierData.length === 0 ? (
+            <EmptyState label="Run a test suite to see tier savings" />
+          ) : (
+            <div className="table-responsive">
+              <table className="ge-table">
+                <thead>
+                  <tr>
+                    <th>Tier</th>
+                    <th>Hits</th>
+                    <th>Tokens saved</th>
+                    <th>Cost saved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tierData.map(row => (
+                    <tr key={row.tier}>
+                      <td className="text-sm">{row.label}</td>
+                      <td className="cell-mono">{row.hit_count ?? 0}</td>
+                      <td className="cell-mono data-cell-teal">
+                        {(row.tokens_saved ?? 0).toLocaleString()}
+                      </td>
+                      <td className="cell-mono data-cell-green">
+                        {fmtCost(row.cost_saved ?? 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

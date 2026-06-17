@@ -66,6 +66,10 @@ export interface RunEvent {
   error_messages?: string[];
   // error
   message?:        string;
+  // multi-tier fields
+  tier1_hit?:       boolean;
+  tier2_cached_tokens?: number;
+  tier3_hit?:       boolean;
 }
 
 // ── Analytics types ───────────────────────────────────────────────────────────
@@ -92,6 +96,14 @@ export interface EndpointRow {
   avg_latency_ms: number;
   total_cost_usd: number;
   cost_saved_usd: number;
+}
+
+export interface TierBreakdownRow {
+  tier:         "tier1_semantic" | "tier2_prefix" | "tier3_inference";
+  label:        string;
+  tokens_saved: number;
+  cost_saved:   number;
+  hit_count:    number;
 }
 
 export interface SimilarityBucket {

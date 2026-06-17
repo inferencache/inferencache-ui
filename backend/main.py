@@ -195,9 +195,60 @@ class RunEvent(BaseModel):
     hit_rate: float = 0.0
     api_errors: int = 0
     message: str = ""
+    # multi-tier fields
+    tier1_hit: bool = False
+    tier2_cached_tokens: int = 0
+    tier3_hit: bool = False
 
 
-# ── LLM client helpers ────────────────────────────────────────────────────────
+# ── Tier savings helpers ──────────────────────────────────────────────────────
+
+_INPUT_COST_PER_TOKEN: dict[str, float] = {
+    "openai": 0.000001,      # ~$1/M input tokens (approximate)
+    "anthropic": 0.000003,
+}
+
+_PREFIX_DISCOUNT: dict[str, float] = {
+    "openai": 0.50,       # 50% discount on cached prefix tokens
+    "anthropic": 0.90,    # 90% discount on cache read tokens
+}
+
+
+def _extract_cached_input_tokens(provider: str, usage: dict) -> int:
+    """Normalize cached/prefix input tokens across API versions."""
+    if provider == "openai":
+        details = usage.get("prompt_tokens_details") or {}
+        return int(details.get("cached_tokens") or usage.get("cached_tokens") or 0)
+    if provider == "anthropic":
+        return int(usage.get("cache_read_input_tokens") or 0)
+    return 0
+
+
+def _compute_tier_savings(
+    provider: str,
+    model: str,
+    cached_input_tokens: int,
+    tokens_input: int,
+    tokens_output: int,
+    cost_usd: float,
+) -> dict[str, float | int]:
+    """Compute Tier 2/3 savings from provider usage data."""
+    input_rate = _INPUT_COST_PER_TOKEN.get(provider, 0.000001)
+    discount = _PREFIX_DISCOUNT.get(provider, 0.50)
+    tier2_cost_saved = round(
+        cached_input_tokens * input_rate * discount, 8
+    )
+    tier3_hit = int(
+        tokens_input > 0 and cached_input_tokens >= tokens_input
+    )
+    output_cost = tokens_output * MODEL_COSTS.get(model, 0.000003)
+    tier3_cost_saved = round(output_cost, 8) if tier3_hit else 0.0
+    return {
+        "tier2_cached_input_tokens": cached_input_tokens,
+        "tier2_cost_saved": tier2_cost_saved,
+        "tier3_hit": tier3_hit,
+        "tier3_cost_saved": tier3_cost_saved,
+    }
 
 MODEL_COSTS: dict[str, float] = {
     # GPT-5.5
@@ -348,7 +399,7 @@ async def _openai_completion_once(
     model: str,
     api_key: str,
     limit: int,
-) -> tuple[str, int, int]:
+) -> tuple[str, int, int, int]:
     resp = await client.post(
         "https://api.openai.com/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -366,11 +417,12 @@ async def _openai_completion_once(
     usage = data.get("usage", {})
     tokens_input  = usage.get("prompt_tokens", count_tokens(prompt))
     tokens_output = usage.get("completion_tokens", count_tokens(text))
-    return text, tokens_input, tokens_output
+    cached_input  = _extract_cached_input_tokens("openai", usage)
+    return text, tokens_input, tokens_output, cached_input
 
 
-async def call_openai(prompt: str, model: str, api_key: str) -> tuple[str, int, int]:
-    """Returns (response_text, tokens_input, tokens_output)."""
+async def call_openai(prompt: str, model: str, api_key: str) -> tuple[str, int, int, int]:
+    """Returns (response_text, tokens_input, tokens_output, cached_input_tokens)."""
     limits = _openai_output_token_limits(model)
     timeout = 180.0 if _uses_internal_reasoning(model) else 60.0
     last_exc: Exception | None = None
@@ -389,8 +441,8 @@ async def call_openai(prompt: str, model: str, api_key: str) -> tuple[str, int, 
     raise last_exc or ValueError("OpenAI request failed")
 
 
-async def call_anthropic(prompt: str, model: str, api_key: str) -> tuple[str, int, int]:
-    """Returns (response_text, tokens_input, tokens_output)."""
+async def call_anthropic(prompt: str, model: str, api_key: str) -> tuple[str, int, int, int]:
+    """Returns (response_text, tokens_input, tokens_output, cached_input_tokens)."""
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "https://api.anthropic.com/v1/messages",
@@ -419,7 +471,8 @@ async def call_anthropic(prompt: str, model: str, api_key: str) -> tuple[str, in
         usage = data.get("usage", {})
         tokens_input  = usage.get("input_tokens", count_tokens(prompt))
         tokens_output = usage.get("output_tokens", count_tokens(text))
-        return text, tokens_input, tokens_output
+        cached_input  = _extract_cached_input_tokens("anthropic", usage)
+        return text, tokens_input, tokens_output, cached_input
 
 
 # ── Suite loading ─────────────────────────────────────────────────────────────
@@ -704,6 +757,8 @@ async def _run_suite(config: RunConfig, run_id: str, emit) -> None:
         tokens_output: int | None = None
         cost = 0.0
         response_text = ""
+        tier2_cached_tokens = 0
+        tier3_hit = False
 
         if result.hit:
             response_text = result.response or ""
@@ -717,12 +772,13 @@ async def _run_suite(config: RunConfig, run_id: str, emit) -> None:
                 summary["semantic_hits"] += 1
         else:
             try:
+                cached_input = 0
                 if config.provider == "openai":
-                    response_text, tokens_input, tokens_output = await call_openai(
+                    response_text, tokens_input, tokens_output, cached_input = await call_openai(
                         prompt, config.model, config.openai_api_key
                     )
                 elif config.provider == "anthropic":
-                    response_text, tokens_input, tokens_output = await call_anthropic(
+                    response_text, tokens_input, tokens_output, cached_input = await call_anthropic(
                         prompt, config.model, config.anthropic_api_key
                     )
                 else:
@@ -730,6 +786,16 @@ async def _run_suite(config: RunConfig, run_id: str, emit) -> None:
 
                 tokens = (tokens_input or 0) + (tokens_output or 0)
                 cost = estimate_cost(config.model, tokens)
+                tier_savings = _compute_tier_savings(
+                    config.provider,
+                    config.model,
+                    cached_input,
+                    tokens_input or 0,
+                    tokens_output or 0,
+                    cost,
+                )
+                tier2_cached_tokens = int(tier_savings["tier2_cached_input_tokens"])
+                tier3_hit = bool(tier_savings["tier3_hit"])
                 engine.store(
                     prompt, response_text,
                     tokens_input=tokens_input,
@@ -737,6 +803,10 @@ async def _run_suite(config: RunConfig, run_id: str, emit) -> None:
                     cost_usd=cost,
                     endpoint="dashboard/run-suite",
                     session_id=run_id,
+                    tier2_cached_input_tokens=tier2_cached_tokens,
+                    tier3_hit=int(tier3_hit),
+                    tier2_cost_saved=float(tier_savings["tier2_cost_saved"]),
+                    tier3_cost_saved=float(tier_savings["tier3_cost_saved"]),
                 )
 
             except Exception as exc:
@@ -788,6 +858,9 @@ async def _run_suite(config: RunConfig, run_id: str, emit) -> None:
             "endpoint": "dashboard/run-suite",
             "session_id": run_id,
             "matched_prompt": result.entry.prompt if result.hit_type == "semantic" and result.entry else None,
+            "tier1_hit": result.hit or result.tier1_hit,
+            "tier2_cached_tokens": tier2_cached_tokens,
+            "tier3_hit": tier3_hit,
         }
         call_records.append(call_event)
         await emit(call_event)
@@ -977,6 +1050,18 @@ async def analytics_similarity_dist(
     loop = asyncio.get_event_loop()
     rows = await loop.run_in_executor(
         None, get_analytics().similarity_distribution, model, window_hours, buckets
+    )
+    return {"data": rows, "model": model, "window_hours": window_hours}
+
+
+@app.get("/analytics/tier-breakdown")
+async def analytics_tier_breakdown(
+    model: str = "gpt-4o-mini",
+    window_hours: int = 24,
+):
+    loop = asyncio.get_event_loop()
+    rows = await loop.run_in_executor(
+        None, get_analytics().tier_breakdown, model, window_hours
     )
     return {"data": rows, "model": model, "window_hours": window_hours}
 

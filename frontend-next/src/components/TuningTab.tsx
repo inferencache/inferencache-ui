@@ -10,7 +10,11 @@ import {
 } from "@/lib/api";
 import { TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
+import { analyzeSystemPrompt } from "@/lib/prefixPatterns";
 import type { FalsePositiveRow, SimilarityBucket } from "@/types";
+
+const DEFAULT_SYSTEM_PROMPT =
+  "You are a helpful assistant. Answer concisely and accurately.";
 
 interface Props {
   model:     string;
@@ -24,6 +28,9 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
   const [simThresh,  setSimThresh]  = useState(threshold);
   const [loading,    setLoading]    = useState(false);
   const [unflagging, setUnflagging] = useState<number | null>(null);
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+
+  const prefixAnalysis = analyzeSystemPrompt(systemPrompt);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,6 +109,57 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
               candidates would pass ({hitsAtThresh}/{totalSemantic} in last 24h).
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Prefix optimizer */}
+      <div className="ge-card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Prefix optimizer</div>
+            <div className="card-subtitle">
+              System prompt stability:{" "}
+              <strong className={
+                prefixAnalysis.stability_score >= 0.75
+                  ? "data-cell-green"
+                  : prefixAnalysis.stability_score >= 0.5
+                    ? "data-cell-yellow"
+                    : "data-cell-red"
+              }>
+                {(prefixAnalysis.stability_score * 100).toFixed(0)}%
+              </strong>
+            </div>
+          </div>
+        </div>
+        <div className="card-body flex flex-col gap-3">
+          <label className="text-xs text-t-3" htmlFor="system-prompt-input">
+            System prompt (stable content should not change between requests)
+          </label>
+          <textarea
+            id="system-prompt-input"
+            className="w-full rounded border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm text-t-1 font-mono min-h-[100px] resize-y"
+            value={systemPrompt}
+            onChange={e => setSystemPrompt(e.target.value)}
+            placeholder="Enter your system prompt…"
+          />
+          {prefixAnalysis.warnings.length > 0 ? (
+            <ul className="text-sm text-t-2 flex flex-col gap-1">
+              {prefixAnalysis.warnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="data-cell-yellow shrink-0">⚠</span>
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-t-2 data-cell-green">
+              No dynamic content detected — good prefix cache stability.
+            </p>
+          )}
+          <p className="text-xs text-t-3">
+            Tip: move file paths, timestamps, and user-specific values to the
+            end of the message array instead of the system prompt.
+          </p>
         </div>
       </div>
 

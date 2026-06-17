@@ -13,6 +13,7 @@ import type {
   RunEvent,
   RunRecord,
   SimilarityBucket,
+  TierBreakdownRow,
   ThresholdRecommendation,
   TimeWindow,
 } from "@/types";
@@ -251,6 +252,17 @@ export async function fetchEndpoints(
 ): Promise<EndpointRow[]> {
   const res = await fetch(
     `${BASE}/analytics/endpoints?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  );
+  if (!res.ok) return [];
+  return (await res.json()).data ?? [];
+}
+
+export async function fetchTierBreakdown(
+  model: string,
+  windowHours = 24,
+): Promise<TierBreakdownRow[]> {
+  const res = await fetch(
+    `${BASE}/analytics/tier-breakdown?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
   );
   if (!res.ok) return [];
   return (await res.json()).data ?? [];
