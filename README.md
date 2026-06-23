@@ -1,31 +1,47 @@
 # promptcache testing dashboard
 
-Live pressure-testing dashboard for promptcache. Fire real LLM calls through the semantic cache, watch hits vs misses in real time, track token spend and cost savings per call, export charts to chart-output.com.
+Live pressure-testing dashboard for [promptcache](https://github.com/lavondev/promptcache). Fire real LLM calls through the semantic cache, watch hits vs misses in real time, track token spend and cost savings per call.
 
 ---
 
-## Setup
+## For end users
 
-Two terminals.
-
-### Terminal 1 — Backend (FastAPI)
+Use the main library — no need to clone this repo:
 
 ```bash
-cd promptcache-dashboard/backend
-# First-time setup (only needed once):
-/Users/justingaddy/anaconda3/envs/promptcache/bin/pip install -r requirements.txt
+pip install "promptcache[embed,serve]"
+export ANTHROPIC_API_KEY=sk-ant-...
+promptcache serve
+# dashboard → http://localhost:8080/dashboard
+# proxy     → http://localhost:8080
+```
 
-# Start the server (always use this — avoids picking up the wrong Python):
+Set `ANTHROPIC_BASE_URL=http://localhost:8080` in Cursor, Claude Code, or your SDK.
+
+---
+
+## For UI contributors
+
+Two terminals, with both repos cloned as siblings (see [CONTRIBUTING.md](https://github.com/lavondev/promptcache/blob/main/CONTRIBUTING.md) in the main repo).
+
+### Terminal 1 — Backend (dev shim)
+
+```bash
+cd backend
+pip install -e ../../promptcache[embed,serve]
 ./run.sh
+# → http://localhost:8000/api
 ```
 
 ### Terminal 2 — Frontend (Next.js)
 
 ```bash
-cd promptcache-dashboard/frontend-next
+cd frontend-next
+cp .env.example .env.local
+# Set: NEXT_PUBLIC_API_URL=http://localhost:8000/api
 npm install
 npm run dev
-# -> http://localhost:3000
+# → http://localhost:3000
 ```
 
 ---
@@ -49,7 +65,6 @@ npm run dev
 2. Pick a model and prompt suite
 3. Set **repeat factor >= 2** (this generates cache hits)
 4. Click **Run suite**
-5. Click **Export to chart-output.com** to share
 
 ---
 
@@ -57,15 +72,16 @@ npm run dev
 
 ```
 backend/
-  main.py               FastAPI, SSE, LLM routing, promptcache integration
-  requirements.txt
-  prompt_suites/        Built-in JSON suite files
+  main.py               Dev shim — imports promptcache.proxy.control
+  run.sh                Start uvicorn on :8000
+  requirements.txt      pip install -e ../../promptcache[serve]
 
 frontend-next/
   src/
     app/                Next.js App Router
     components/         React components
     lib/                API client + useRunSession hook
-    types/              Shared TypeScript types
-  .env.local            NEXT_PUBLIC_API_URL=http://localhost:8000
+  .env.example          API URL config
 ```
+
+Built-in prompt suites ship in the main `promptcache` package under `proxy/data/prompt_suites/`.

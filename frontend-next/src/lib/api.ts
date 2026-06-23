@@ -21,7 +21,7 @@ import { MODEL_OUTPUT_CPT, costPerToken } from "@/lib/models";
 
 export { costPerToken };
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export async function fetchSuites(): Promise<string[]> {
   const res = await fetch(`${BASE}/suites`);
