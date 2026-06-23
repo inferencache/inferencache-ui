@@ -4,7 +4,6 @@ import clsx from "clsx";
 import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
 import { NavbarMenuNav } from "@/components/navbar/NavbarMenuNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAppShell } from "@/lib/appShell";
 import type { DashboardTab, NavbarPage } from "@/lib/dashboardNav";
 import type { RunPhase } from "@/types";
 
@@ -23,9 +22,9 @@ interface Props {
   keysReady?:   boolean;
   onOpenKeys?:  () => void;
   onClear?:     () => void;
-  chartUrl?:    string;
-  hasChart?:    boolean;
-  onDashboard?: boolean;
+  hasChart?:       boolean;
+  onExportCsv?:    () => void;
+  onDashboard?:    boolean;
   showRunTools?: boolean;
   rightExtra?:  React.ReactNode;
 }
@@ -54,8 +53,8 @@ export const NavbarMenu = memo(function NavbarMenu({
   keysReady = false,
   onOpenKeys,
   onClear,
-  chartUrl,
   hasChart = false,
+  onExportCsv,
   onDashboard = false,
   showRunTools = false,
   rightExtra,
@@ -63,7 +62,6 @@ export const NavbarMenu = memo(function NavbarMenu({
   const menuId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const { toggleControls } = useAppShell();
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -156,13 +154,6 @@ export const NavbarMenu = memo(function NavbarMenu({
 
           <div className="navbar-menu-section">
             <div className="navbar-menu-heading">Tools</div>
-            <button
-              type="button"
-              className="navbar-menu-item lg:hidden"
-              onClick={() => { toggleControls(); close(); }}
-            >
-              <span className="navbar-menu-item-label">Configuration</span>
-            </button>
             {rightExtra && (
               <div className="navbar-menu-extra" onClick={close} role="presentation">
                 {rightExtra}
@@ -174,16 +165,15 @@ export const NavbarMenu = memo(function NavbarMenu({
                 {keyCount > 0 && <span className="badge-count">{keyCount}</span>}
               </button>
             )}
-            {chartUrl && hasChart && onDashboard && (
-              <a
-                href={chartUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+            {hasChart && onExportCsv && onDashboard && (
+              <button
+                type="button"
                 className="navbar-menu-item"
-                onClick={close}
+                title="Download latency and cost data from the current run"
+                onClick={() => { onExportCsv(); close(); }}
               >
-                <span className="navbar-menu-item-label">Open chart</span>
-              </a>
+                <span className="navbar-menu-item-label">Export run CSV</span>
+              </button>
             )}
             <div className="navbar-menu-item navbar-menu-item-static">
               <span className="navbar-menu-item-label">Theme</span>

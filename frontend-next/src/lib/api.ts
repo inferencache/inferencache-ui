@@ -305,21 +305,64 @@ export async function fetchFalsePositives(
     `${BASE}/tuning/false-positives?model=${encodeURIComponent(model)}&limit=${limit}`
   );
   if (!res.ok) return [];
-  return (await res.json()).data ?? [];
+  const rows: Partial<FalsePositiveRow>[] = (await res.json()).data ?? [];
+  return rows.map((row) => ({
+    id: row.id ?? 0,
+    prompt_hash: row.prompt_hash ?? "",
+    similarity: row.similarity ?? 0,
+    timestamp: row.timestamp ?? 0,
+    original_prompt: row.original_prompt ?? "",
+    cached_response: row.cached_response ?? "",
+  }));
 }
 
-/** Build a chart-output.com URL pre-loaded with timeline CSV */
-export function buildChartOutputUrl(
-  points: Array<{ idx: number; hit_ms: number | null; miss_ms: number | null; cost: number }>
+export type TimelineExportPoint = {
+  idx:     number;
+  hit_ms:  number | null;
+  miss_ms: number | null;
+  cost:    number;
+  tokens?: number;
+  type?:   string;
+};
+
+/** Build CSV text for a run timeline export. */
+export function buildTimelineCsv(
+  points: TimelineExportPoint[],
 ): string {
-  if (points.length === 0) return "https://chart-output.com";
   const rows = [
-    "call,latency_ms,cost_usd,type",
+    "call,type,latency_ms,cost_usd,tokens",
     ...points.map((p) => {
-      const type = p.hit_ms !== null ? "cache" : "api";
+      const type = p.type ?? (p.hit_ms !== null ? "cache" : "api");
       const ms = p.hit_ms ?? p.miss_ms ?? 0;
-      return `${p.idx + 1},${ms.toFixed(1)},${(p.cost ?? 0).toFixed(8)},${type}`;
+      return [
+        p.idx + 1,
+        type,
+        ms.toFixed(1),
+        (p.cost ?? 0).toFixed(8),
+        p.tokens ?? 0,
+      ].join(",");
     }),
-  ].join("\n");
-  return `https://chart-output.com/?data=${encodeURIComponent(rows)}`;
+  ];
+  return rows.join("\n");
+}
+
+/** Trigger a browser download of the run timeline CSV. */
+export function downloadTimelineCsv(
+  points: TimelineExportPoint[],
+  filename = "run-export.csv",
+): void {
+  if (points.length === 0) return;
+  const blob = new Blob([buildTimelineCsv(points)], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+/** @deprecated chart-output.com no longer accepts ?data= CSV URLs */
+export function buildChartOutputUrl(points: TimelineExportPoint[]): string {
+  if (points.length === 0) return "https://chart-output.com";
+  return `https://chart-output.com/?data=${encodeURIComponent(buildTimelineCsv(points))}`;
 }

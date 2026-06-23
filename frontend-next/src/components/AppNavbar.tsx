@@ -22,8 +22,8 @@ interface Props {
   onOpenKeys?:  () => void;
   onRun?:       () => void;
   onClear?:     () => void;
-  chartUrl?:    string;
   hasChart?:    boolean;
+  onExportCsv?: () => void;
   rightExtra?:  React.ReactNode;
 }
 
@@ -40,8 +40,8 @@ export const AppNavbar = memo(function AppNavbar({
   onOpenKeys,
   onRun,
   onClear,
-  chartUrl,
   hasChart = false,
+  onExportCsv,
   rightExtra,
 }: Props) {
   const pathname = usePathname();
@@ -80,8 +80,8 @@ export const AppNavbar = memo(function AppNavbar({
             keysReady={keysReady}
             onOpenKeys={onOpenKeys}
             onClear={onClear}
-            chartUrl={chartUrl}
             hasChart={hasChart}
+            onExportCsv={onExportCsv}
             onDashboard={onDashboard}
             showRunTools={showRunActions}
             rightExtra={rightExtra}

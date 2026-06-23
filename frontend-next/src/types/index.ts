@@ -122,10 +122,10 @@ export interface AlertState {
 export interface FalsePositiveRow {
   id:               number;
   prompt_hash:      string;
-  similarity:       number;
-  timestamp:        number;
-  original_prompt:  string;
-  cached_response:  string;
+  similarity?:      number;
+  timestamp?:       number;
+  original_prompt?: string;
+  cached_response?: string;
 }
 
 export type TimeWindow = "1h" | "6h" | "24h" | "7d" | "30d";

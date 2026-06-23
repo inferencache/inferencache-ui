@@ -14,7 +14,6 @@ interface Props {
   elapsedMs:       number;
   etaMs:           number | null;
   runId:           string | null;
-  chartUrl:        string;
   timeline:        TimelinePoint[];
   viewingSavedRun?: boolean;
   runError?:       string | null;
@@ -78,7 +77,7 @@ function useTimelineCsvUrl(timeline: TimelinePoint[], active: boolean): string |
 }
 
 export function RunProgress({
-  phase, progress, total, timerStartedAt, elapsedMs, etaMs, runId, chartUrl, timeline,
+  phase, progress, total, timerStartedAt, elapsedMs, etaMs, runId, timeline,
   viewingSavedRun = false, runError,
 }: Props) {
   const csvUrl = useTimelineCsvUrl(timeline, phase === "done");
@@ -129,12 +128,9 @@ export function RunProgress({
           <div className="flex gap-2 ml-auto">
             {csvUrl && (
               <a href={csvUrl} download={`run-${runId ?? "export"}.csv`} className="top-btn no-underline">
-                CSV
+                Export CSV
               </a>
             )}
-            <a href={chartUrl} target="_blank" rel="noopener noreferrer" className="top-btn no-underline">
-              Chart
-            </a>
           </div>
         </div>
       )}

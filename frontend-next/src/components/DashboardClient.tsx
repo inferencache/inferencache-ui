@@ -14,7 +14,7 @@ import { LeftSidebar }     from "@/components/LeftSidebar";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { ApiKeysModal }    from "@/components/ApiKeysModal";
 import {
-  fetchSuites, buildChartOutputUrl, fetchAnalysis, setThreshold,
+  fetchSuites, downloadTimelineCsv, fetchAnalysis, setThreshold,
 } from "@/lib/api";
 import { useRunSession }   from "@/lib/useRunSession";
 import { useApiKeys }      from "@/lib/useApiKeys";
@@ -111,7 +111,10 @@ export function DashboardClient() {
     [openaiKey, anthropicKey],
   );
 
-  const chartUrl = useMemo(() => buildChartOutputUrl(timeline), [timeline]);
+  const handleExportCsv = useCallback(() => {
+    downloadTimelineCsv(timeline, `run-${runId ?? "export"}.csv`);
+  }, [timeline, runId]);
+
   const hasKey   = keyStatuses.openai || keyStatuses.anthropic;
 
   return (
@@ -129,8 +132,8 @@ export function DashboardClient() {
         onOpenKeys={openKeys}
         onRun={handleRun}
         onClear={handleClear}
-        chartUrl={chartUrl}
         hasChart={timeline.length > 0}
+        onExportCsv={handleExportCsv}
       />
 
       <div className="app-shell-body">
@@ -154,7 +157,7 @@ export function DashboardClient() {
                 phase={phase} progress={progress} total={total}
                 timerStartedAt={timerStartedAt}
                 elapsedMs={elapsedMs} etaMs={etaMs}
-                runId={runId} chartUrl={chartUrl} timeline={timeline}
+                runId={runId} timeline={timeline}
                 viewingSavedRun={viewingSavedRun}
                 runError={runError}
               />

@@ -253,13 +253,17 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {fps.map(r => (
+                  {fps.map(r => {
+                    const similarity = r.similarity ?? 0;
+                    return (
                     <tr key={r.id}>
                       <td className="cell-mono data-cell-yellow">
-                        {r.similarity.toFixed(4)}
+                        {similarity > 0 ? similarity.toFixed(4) : "—"}
                       </td>
                       <td className="cell-mono text-xs text-t-3">
-                        {new Date(r.timestamp * 1000).toLocaleString()}
+                        {r.timestamp
+                          ? new Date(r.timestamp * 1000).toLocaleString()
+                          : "—"}
                       </td>
                       <td className="text-xs max-w-[200px] truncate" title={r.original_prompt}>
                         {r.original_prompt}
@@ -278,7 +282,8 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
