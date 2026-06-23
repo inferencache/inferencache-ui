@@ -1,4 +1,4 @@
-import { GITHUB_URL, LandingNav, X_URL } from "@/components/landing/LandingNav";
+import { GITHUB_REPO_URL, GITHUB_URL, LandingNav, X_URL } from "@/components/landing/LandingNav";
 import { CopyInstallBlock } from "@/components/landing/CopyInstallBlock";
 import { CodeWindow } from "@/components/landing/CodeWindow";
 
@@ -36,7 +36,7 @@ export function LandingPage() {
       <div className="landing-inner">
         <LandingNav />
 
-        <section className="landing-hero">
+        <section className="landing-hero" id="main-content" tabIndex={-1}>
           <div className="landing-hero-left">
             <p className="landing-eyebrow pc-mono">LLM cost infrastructure</p>
             <h1 className="landing-headline">
@@ -50,7 +50,7 @@ export function LandingPage() {
             <div className="landing-cta-row">
               <CopyInstallBlock />
               <a
-                href={GITHUB_URL}
+                href={GITHUB_REPO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="landing-github-btn"
@@ -91,10 +91,10 @@ export function LandingPage() {
               <rect x="4" y="9.5" width="14" height="4" rx="1.4" stroke="#b86a2a" strokeWidth="1.3" opacity="0.4" />
               <rect x="7" y="15.5" width="8" height="3" rx="1.4" stroke="#b86a2a" strokeWidth="1.3" opacity="0.2" />
             </svg>
-            inferencache · built in public
+            inferencache
           </span>
           <div className="landing-footer-links">
-            <a href={X_URL} target="_blank" rel="noopener noreferrer">@jaybhatt_ on X</a>
+            <a href={X_URL} target="_blank" rel="noopener noreferrer">@justindev_ on X</a>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </footer>

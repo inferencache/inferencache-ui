@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { uploadSuite, fetchRecommendations, applyThreshold, fetchRuns } from "@/lib/api";
+import { uploadSuite, fetchRecommendations, applyThreshold } from "@/lib/api";
 import { ModelPicker } from "@/components/ModelPicker";
 import { ConfigLabel, InfoTip } from "@/components/InfoTip";
 import { RunHistory } from "@/components/RunHistory";
@@ -14,8 +14,6 @@ import {
 } from "@/lib/models";
 import type { RunConfig, RunDetail, ThresholdRecommendation } from "@/types";
 import clsx from "clsx";
-
-type SidebarTab = "config" | "history";
 
 interface Props {
   config:       RunConfig;
@@ -40,8 +38,6 @@ export function LeftSidebar({
   onRun, onClear, running = false, keysReady = false, onOpenKeys,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tab, setTab] = useState<SidebarTab>("config");
-  const [runCount, setRunCount] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [rec, setRec] = useState<ThresholdRecommendation | null>(null);
@@ -57,12 +53,6 @@ export function LeftSidebar({
       })
       .catch(() => setRec(null));
   }, [refreshTick, config.suite_name, config.model]);
-
-  useEffect(() => {
-    fetchRuns()
-      .then((list) => setRunCount(list.length))
-      .catch(() => setRunCount(0));
-  }, [refreshTick]);
 
   async function handleApplyRec() {
     if (!rec) return;
@@ -104,42 +94,7 @@ export function LeftSidebar({
 
   return (
     <div className="sidebar-body">
-      <div className="sidebar-tabs" role="tablist" aria-label="Sidebar panels">
-        <button
-          type="button"
-          role="tab"
-          id="sidebar-tab-config"
-          aria-selected={tab === "config"}
-          aria-controls="sidebar-panel-config"
-          className={clsx("sidebar-tab", tab === "config" && "active")}
-          onClick={() => setTab("config")}
-        >
-          Configuration
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="sidebar-tab-history"
-          aria-selected={tab === "history"}
-          aria-controls="sidebar-panel-history"
-          className={clsx("sidebar-tab", tab === "history" && "active")}
-          onClick={() => setTab("history")}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            Past runs
-            <InfoTip content={TIPS.pastRuns} placement="right" />
-          </span>
-          {runCount > 0 && <span className="sidebar-tab-count">{runCount}</span>}
-        </button>
-      </div>
-
-      {tab === "config" ? (
-      <div
-        id="sidebar-panel-config"
-        role="tabpanel"
-        aria-labelledby="sidebar-tab-config"
-        className="cfg"
-      >
+      <div id="sidebar-panel-config" className="cfg">
         <div className="cg">
           <ConfigLabel tip={TIPS.provider}>Provider</ConfigLabel>
           <div className="tabs" role="radiogroup" aria-label="API provider">
@@ -287,22 +242,16 @@ export function LeftSidebar({
           )}
         </div>
       </div>
-      ) : (
-      <div
-        id="sidebar-panel-history"
-        role="tabpanel"
-        aria-labelledby="sidebar-tab-history"
-        className="sidebar-history-panel"
-      >
+
+      <div className="sidebar-past-runs">
+        <p className="sidebar-past-label">PAST RUNS</p>
         <RunHistory
           embedded
           refreshTick={refreshTick}
           onRerun={onRerun}
           onViewRun={onViewRun}
-          onCountChange={setRunCount}
         />
       </div>
-      )}
     </div>
   );
 }

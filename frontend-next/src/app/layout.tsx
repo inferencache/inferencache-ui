@@ -6,11 +6,17 @@ import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
 import "../styles/tokens.css";
 import "../styles/app.css";
+import "../styles/dashboard-components.css";
+import "../styles/dashboard-mock.css";
 import "../styles/landing.css";
 
 export const metadata: Metadata = {
   title:       "inferencache",
   description: "Multi-tier semantic caching for LLM APIs. Stop paying for the same prompt twice.",
+  icons: {
+    icon:  "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

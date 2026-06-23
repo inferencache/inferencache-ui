@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppNavbar } from "@/components/AppNavbar";
 import { MetricsGrid }     from "@/components/metrics/MetricsGrid";
 import { HitBar }          from "@/components/HitBar";
@@ -14,11 +14,11 @@ import { LeftSidebar }     from "@/components/LeftSidebar";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { ApiKeysModal }    from "@/components/ApiKeysModal";
 import { fetchSuites, setThreshold } from "@/lib/api";
+import { parseDashboardTab, tabHref } from "@/lib/dashboardNav";
 import { useRunSession }   from "@/lib/useRunSession";
 import { useApiKeys }      from "@/lib/useApiKeys";
 import type { RunConfig, RunDetail } from "@/types";
-
-type Tab = "live" | "analytics" | "tuning";
+import type { DashboardTab as Tab } from "@/lib/dashboardNav";
 
 const DEFAULT_CONFIG: RunConfig = {
   suite_name:        "general_qa",
@@ -32,12 +32,13 @@ const DEFAULT_CONFIG: RunConfig = {
 };
 
 export function DashboardClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const activeTab = parseDashboardTab(searchParams.get("tab"));
   const [config,       setConfig]       = useState<RunConfig>(DEFAULT_CONFIG);
   const [suites,       setSuites]       = useState<string[]>(["general_qa", "coding", "summarization"]);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [refreshTick,  setRefreshTick]  = useState(0);
-  const [activeTab,    setActiveTab]    = useState<Tab>("live");
 
   const {
     running, phase, runId, runError, entries, timeline, stats,
@@ -58,20 +59,17 @@ export function DashboardClient() {
     fetchSuites().then(s => s.length > 0 && setSuites(s)).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab === "analytics" || tab === "tuning" || tab === "live") {
-      setActiveTab(tab);
-    }
-  }, [searchParams]);
+  const navigateTab = useCallback((tab: Tab) => {
+    router.replace(tabHref(tab), { scroll: false });
+  }, [router]);
 
   const openaiKey    = getKey("openai");
   const anthropicKey = getKey("anthropic");
 
   const handleRun = useCallback(() => {
     run({ ...config, openai_api_key: openaiKey, anthropic_api_key: anthropicKey });
-    setActiveTab("live");
-  }, [run, config, openaiKey, anthropicKey]);
+    navigateTab("live");
+  }, [run, config, openaiKey, anthropicKey, navigateTab]);
 
   const handleClear = useCallback(() => {
     clear(config.model);
@@ -93,8 +91,8 @@ export function DashboardClient() {
       threshold:     detail.threshold,
       repeat_factor: detail.repeat_factor,
     }));
-    setActiveTab("live");
-  }, [loadSavedRun]);
+    navigateTab("live");
+  }, [loadSavedRun, navigateTab]);
 
   const handleThresholdChange = useCallback(async (t: number) => {
     await setThreshold(config.model, t).catch(() => {});
@@ -116,24 +114,25 @@ export function DashboardClient() {
       <AppNavbar
         page="dashboard"
         activeTab={activeTab}
-        onTabChange={setActiveTab}
       />
 
       <div className="app-shell-body">
-        <ResizableSidebar>
-          <LeftSidebar
-            config={config} setConfig={setConfig}
-            suites={suites} setSuites={setSuites}
-            refreshTick={refreshTick}
-            onRerun={handleRerun}
-            onViewRun={handleViewRun}
-            onRun={handleRun}
-            onClear={handleClear}
-            running={running}
-            keysReady={hasKey}
-            onOpenKeys={openKeys}
-          />
-        </ResizableSidebar>
+        {activeTab === "live" && (
+          <ResizableSidebar>
+            <LeftSidebar
+              config={config} setConfig={setConfig}
+              suites={suites} setSuites={setSuites}
+              refreshTick={refreshTick}
+              onRerun={handleRerun}
+              onViewRun={handleViewRun}
+              onRun={handleRun}
+              onClear={handleClear}
+              running={running}
+              keysReady={hasKey}
+              onOpenKeys={openKeys}
+            />
+          </ResizableSidebar>
+        )}
 
         <div className="main-column">
           <main id="main-content" tabIndex={-1} className="main-content outline-none">
@@ -165,13 +164,13 @@ export function DashboardClient() {
           )}
 
           {activeTab === "analytics" && (
-            <div className="content">
-              <AnalyticsTab model={config.model} />
+            <div className="tab-page">
+              <AnalyticsTab model={config.model} refreshTick={refreshTick} />
             </div>
           )}
 
           {activeTab === "tuning" && (
-            <div className="content">
+            <div className="tab-page">
               <TuningTab
                 model={config.model}
                 threshold={config.threshold}

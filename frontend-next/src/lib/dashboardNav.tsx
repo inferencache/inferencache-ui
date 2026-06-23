@@ -57,3 +57,8 @@ export const NAV_ITEMS: NavItemDef[] = [
 export function tabHref(tab: DashboardTab): string {
   return tab === "live" ? "/dashboard/" : `/dashboard/?tab=${tab}`;
 }
+
+export function parseDashboardTab(raw: string | null): DashboardTab {
+  if (raw === "analytics" || raw === "tuning" || raw === "live") return raw;
+  return "live";
+}

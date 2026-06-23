@@ -40,6 +40,33 @@ body {
   color: var(--text);
 }
 
+/* Visually hidden until keyboard focus (a11y skip link) */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
 @layer utilities {
   .text-2xs {
     font-size: 10px;

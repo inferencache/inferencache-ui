@@ -451,7 +451,7 @@
 
 /* ── Sidebar ── */
 .app-shell .controls-panel {
-  width: 252px;
+  width: 312px;
   background: var(--s1);
   border-color: var(--b1);
   overflow: hidden;
@@ -1321,6 +1321,10 @@
 
 /* ── Main column ── */
 .app-shell .main-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--s0);
 }
 
@@ -1397,10 +1401,10 @@
 .app-shell .content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   min-height: 0;
 }
 
@@ -1412,7 +1416,7 @@
 }
 
 .app-shell .card {
-  background: var(--s3);
+  background: var(--s2);
   border: 1px solid var(--b1);
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -1477,7 +1481,7 @@
 
 .app-shell .bs-exact { background: var(--green); }
 .app-shell .bs-sem { background: var(--amber); }
-.app-shell .bs-miss { background: var(--b2); }
+.app-shell .bs-miss { background: #3a4150; }
 
 .app-shell .bar-foot {
   display: flex;
@@ -1490,7 +1494,7 @@
 .app-shell .charts-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {
@@ -1499,7 +1503,7 @@
 
 .app-shell .chart-wrap {
   position: relative;
-  height: 112px;
+  height: 180px;
   margin-top: 8px;
 }
 

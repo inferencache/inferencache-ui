@@ -62,29 +62,12 @@ export const AppNavbar = memo(function AppNavbar({
             const tab = item.id as DashboardTab;
             const href = tabHref(tab);
 
-            if (onDashboard && onTabChange) {
-              return (
-                <Link
-                  key={item.id}
-                  href={href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onTabChange(tab);
-                  }}
-                  className={clsx("app-nav-tab", active && "is-active")}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span className="app-nav-tab-icon">{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            }
-
             return (
               <Link
                 key={item.id}
                 href={href}
                 className={clsx("app-nav-tab", active && "is-active")}
+                aria-current={active ? "page" : undefined}
               >
                 <span className="app-nav-tab-icon">{item.icon}</span>
                 {item.label}

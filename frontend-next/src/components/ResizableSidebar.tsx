@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { useAppShell, useMediaQuery } from "@/lib/appShell";
 
 const STORAGE_KEY = "inferencache-sidebar-width";
-const DEFAULT_W   = 252;
+const DEFAULT_W   = 312;
 const MIN_W       = 220;
 const MAX_W       = 520;
 

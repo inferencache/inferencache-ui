@@ -73,9 +73,9 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
     : "—";
 
   return (
-    <div className="flex flex-col gap-8 p-1">
+    <div className="flex flex-col gap-[18px]">
       {/* Threshold slider */}
-      <div className="ge-card">
+      <div className="ge-card tuning-card">
         <div className="card-header">
           <div>
             <div className="card-title">
@@ -84,7 +84,8 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
               </TitleWithTip>
             </div>
             <div className="card-subtitle">
-              Higher = stricter matching. Current: <strong>{simThresh.toFixed(2)}</strong>
+              Higher = stricter matching. Current:{" "}
+              <span className="pc-mono text-t-1">{simThresh.toFixed(2)}</span>
             </div>
           </div>
           <button
@@ -131,37 +132,39 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
       </div>
 
       {/* Prefix optimizer */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0 !pb-0">
           <div>
-            <div className="card-title">Prefix optimizer</div>
-            <div className="card-subtitle">
-              System prompt stability:{" "}
-              <strong className={
-                prefixAnalysis.stability_score >= 0.75
-                  ? "data-cell-green"
-                  : prefixAnalysis.stability_score >= 0.5
-                    ? "data-cell-yellow"
-                    : "data-cell-red"
-              }>
-                {(prefixAnalysis.stability_score * 100).toFixed(0)}%
-              </strong>
+            <div className="card-title flex flex-wrap items-center gap-x-3 gap-y-1">
+              Prefix optimizer
+              <span className="text-[12.5px] font-normal text-t-2">
+                System prompt stability:{" "}
+                <strong className={
+                  prefixAnalysis.stability_score >= 0.75
+                    ? "data-cell-green"
+                    : prefixAnalysis.stability_score >= 0.5
+                      ? "data-cell-yellow"
+                      : "data-cell-red"
+                }>
+                  {(prefixAnalysis.stability_score * 100).toFixed(0)}%
+                </strong>
+              </span>
             </div>
+            <p className="card-subtitle mt-1">
+              System prompt — stable content should not change between requests.
+            </p>
           </div>
         </div>
-        <div className="card-body flex flex-col gap-3">
-          <label className="text-xs text-t-3" htmlFor="system-prompt-input">
-            System prompt (stable content should not change between requests)
-          </label>
+        <div className="card-body flex flex-col gap-0">
           <textarea
             id="system-prompt-input"
-            className="w-full rounded border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm text-t-1 font-mono min-h-[100px] resize-y"
+            className="prefix-textarea"
             value={systemPrompt}
             onChange={e => setSystemPrompt(e.target.value)}
             placeholder="Enter your system prompt…"
           />
           {prefixAnalysis.warnings.length > 0 ? (
-            <ul className="text-sm text-t-2 flex flex-col gap-1">
+            <ul className="text-sm text-t-2 flex flex-col gap-1 mt-3">
               {prefixAnalysis.warnings.map((w, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="data-cell-yellow shrink-0">⚠</span>
@@ -170,11 +173,12 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-t-2 data-cell-green">
-              No dynamic content detected — good prefix cache stability.
-            </p>
+            <div className="prefix-success-banner">
+              <span className="data-cell-green">✓</span>
+              <span>No dynamic content detected — good prefix cache stability.</span>
+            </div>
           )}
-          <p className="text-xs text-t-3">
+          <p className="text-xs text-t-3 mt-3.5">
             Tip: move file paths, timestamps, and user-specific values to the
             end of the message array instead of the system prompt.
           </p>
@@ -182,21 +186,14 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
       </div>
 
       {/* Similarity histogram */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0">
           <div className="card-title">
             <TitleWithTip tip={TIPS.similarityDist} placement="bottom">
               Similarity distribution
             </TitleWithTip>
           </div>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? "Loading…" : "Refresh"}
-          </button>
+          <span className="card-subtitle">Threshold at {simThresh.toFixed(2)}</span>
         </div>
         <div className="card-body" style={{ height: 220 }}>
           {dist.length === 0 ? (
@@ -238,23 +235,24 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
       </div>
 
       {/* False positive review queue */}
-      <div className="ge-card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">
-              <TitleWithTip tip={TIPS.falsePositiveQueue} placement="bottom">
-                False positive queue
-              </TitleWithTip>
-            </div>
-            <div className="card-subtitle">
-              Semantic hits flagged from the Call drawer
-            </div>
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0 !pb-0">
+          <div className="card-title">
+            <TitleWithTip tip={TIPS.falsePositiveQueue} placement="bottom">
+              False positive queue
+            </TitleWithTip>
           </div>
+          <p className="card-subtitle mt-1">
+            Semantic hits flagged from the call drawer during a test run.
+          </p>
         </div>
-        <div className="card-body p-0">
+        <div className="card-body p-0 pt-2">
           {fps.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-t-3">
-              No false positives flagged yet
+            <div className="fp-empty-state">
+              <div className="fp-empty-title">No false positives flagged yet</div>
+              <div className="fp-empty-sub">
+                Open any SEM row in the call drawer and flag suspicious matches to triage them here.
+              </div>
             </div>
           ) : (
             <div className="table-responsive">

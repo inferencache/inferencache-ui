@@ -89,46 +89,50 @@ export function RunProgress({
   const isDone = phase === "done" || phase === "summarizing";
   const isErr  = phase === "error";
 
+  const statusColor = isErr ? "var(--red)" : isDone ? "var(--green)" : "var(--action)";
+  const statusLabel = viewingSavedRun && isDone ? "Saved run" : PHASE_LABEL[phase];
+
   return (
-    <div className="card cp shrink-0">
-      <div className="flex items-center gap-3 mb-2 text-[11px]">
-        <span style={{ color: isErr ? "var(--red)" : isDone ? "var(--green)" : "var(--action)" }} className="inline-flex items-center gap-1">
-          {viewingSavedRun ? "Saved run" : PHASE_LABEL[phase]}
-          <InfoTip content={TIPS.runProgress} placement="bottom" />
-        </span>
-        {total > 0 && (
-          <span className="rlat">{progress}<span style={{ color: "var(--t3)" }}> / {total}</span></span>
-        )}
-        {total > 0 && !isDone && <span className="rlat">{pct}%</span>}
-        <div className="flex-1" />
-        {displayElapsed > 0 && <span className="rsim">{fmtDuration(displayElapsed)}</span>}
-        {etaMs != null && !isDone && phase === "running" && (
-          <span className="rsim">ETA {fmtDuration(etaMs)}</span>
+    <div className="card cp progress-card shrink-0">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="progress-status inline-flex items-center gap-1" style={{ color: statusColor }}>
+            {statusLabel}
+            <InfoTip content={TIPS.runProgress} placement="bottom" />
+          </span>
+          {total > 0 && (
+            <span className="progress-count">
+              {progress}<span style={{ color: "var(--t3)" }}> / {total}</span>
+            </span>
+          )}
+        </div>
+        {displayElapsed > 0 && (
+          <span className="progress-elapsed">{fmtDuration(displayElapsed)}</span>
         )}
       </div>
 
-      <div className="bar-track mb-2">
+      <div className="progress-bar-track">
         <div
-          className={clsx("bseg", isErr ? "bs-miss" : isDone ? "bs-exact" : "bs-sem")}
+          className={clsx("progress-bar-fill", isErr && "!bg-[var(--red)]")}
           style={{ width: `${isDone ? 100 : pct}%` }}
         />
       </div>
 
       {isErr && runError && (
-        <p className="run-error-inline" role="alert">{runError}</p>
+        <p className="run-error-inline mt-2" role="alert">{runError}</p>
       )}
 
       {phase === "done" && (
-        <div className="bar-foot">
-          {runId && (
-            <span>
-              {viewingSavedRun ? `Viewing #${runId}` : `Saved as #${runId}`}
+        <div className="progress-footer">
+          {runId ? (
+            <span className="progress-saved">
+              {viewingSavedRun ? `Viewing #${runId.slice(0, 8)}` : `Saved as #${runId.slice(0, 8)}`}
             </span>
-          )}
-          <div className="flex gap-2 ml-auto">
+          ) : <span />}
+          <div className="flex gap-2">
             {csvUrl && (
-              <a href={csvUrl} download={`run-${runId ?? "export"}.csv`} className="top-btn no-underline">
-                Export CSV
+              <a href={csvUrl} download={`run-${runId ?? "export"}.csv`} className="mock-action-btn">
+                CSV
               </a>
             )}
           </div>

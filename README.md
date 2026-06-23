@@ -9,7 +9,7 @@ Two terminals, with both repos cloned as siblings:
 ```bash
 # Terminal 1 — API backend
 cd inferencache-dashboard/backend
-pip install -e ../../inferencache[embed,serve]
+pip install -e "../../inferencache[embed,serve]"
 ./run.sh   # http://localhost:8000
 
 # Terminal 2 — frontend

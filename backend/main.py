@@ -4,7 +4,7 @@ inferencache testing dashboard — dev-only FastAPI shim.
 For production, use `inferencache serve` from the main library.
 This module re-exports the shared control API for hot-reload frontend dev.
 
-  pip install -e ../inferencache[serve]
+  pip install -e "../../inferencache[serve]"
   ./run.sh
 """
 

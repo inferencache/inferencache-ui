@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export function useBackendPing() {
   const [ms, setMs] = useState<number | null>(null);
@@ -14,10 +14,10 @@ export function useBackendPing() {
     async function ping() {
       const t = performance.now();
       try {
-        await fetch(`${API_BASE}/health`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
         if (!cancelled) {
           setMs(Math.round(performance.now() - t));
-          setOk(true);
+          setOk(res.ok);
         }
       } catch {
         if (!cancelled) {
@@ -35,6 +35,6 @@ export function useBackendPing() {
     };
   }, []);
 
-  const host = API_BASE.replace(/^https?:\/\//, "");
+  const host = API_BASE.replace(/^https?:\/\//, "").replace(/\/api\/?$/, "");
   return { ms, ok, host };
 }

@@ -21,7 +21,7 @@ import { MODEL_OUTPUT_CPT, costPerToken } from "@/lib/models";
 
 export { costPerToken };
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export async function fetchSuites(): Promise<string[]> {
   const res = await fetch(`${BASE}/suites`);
@@ -222,50 +222,59 @@ export async function applyThreshold(
 }
 
 // ── Analytics endpoints (spec §8) ─────────────────────────────────────────────
+// Prefer /cache-stats/ — ad blockers often block URLs containing "analytics".
+
+async function fetchStatsData<T>(path: string, query: string): Promise<T[]> {
+  for (const prefix of ["cache-stats", "analytics"]) {
+    try {
+      const res = await fetch(`${BASE}/${prefix}/${path}?${query}`);
+      if (res.ok) return (await res.json()).data ?? [];
+    } catch {
+      /* try fallback prefix */
+    }
+  }
+  return [];
+}
 
 export async function fetchHitRate(
   model: string,
   windowHours = 24,
   bucketMinutes = 30,
 ): Promise<HitRateBucket[]> {
-  const res = await fetch(
-    `${BASE}/analytics/hit-rate?model=${encodeURIComponent(model)}&window_hours=${windowHours}&bucket_minutes=${bucketMinutes}`
+  return fetchStatsData(
+    "hit-rate",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}&bucket_minutes=${bucketMinutes}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchCostSaved(
   model: string,
   windowHours = 24,
 ): Promise<CostSavedPoint[]> {
-  const res = await fetch(
-    `${BASE}/analytics/cost-saved?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  return fetchStatsData(
+    "cost-saved",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchEndpoints(
   model: string,
   windowHours = 24,
 ): Promise<EndpointRow[]> {
-  const res = await fetch(
-    `${BASE}/analytics/endpoints?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  return fetchStatsData(
+    "endpoints",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchTierBreakdown(
   model: string,
   windowHours = 24,
 ): Promise<TierBreakdownRow[]> {
-  const res = await fetch(
-    `${BASE}/analytics/tier-breakdown?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  return fetchStatsData(
+    "tier-breakdown",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchSimilarityDist(
@@ -273,11 +282,10 @@ export async function fetchSimilarityDist(
   windowHours = 24,
   buckets = 20,
 ): Promise<SimilarityBucket[]> {
-  const res = await fetch(
-    `${BASE}/analytics/similarity-dist?model=${encodeURIComponent(model)}&window_hours=${windowHours}&buckets=${buckets}`
+  return fetchStatsData(
+    "similarity-dist",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}&buckets=${buckets}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchAlerts(model: string): Promise<AlertState | null> {
