@@ -1,47 +1,34 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import { AppShellProvider } from "@/lib/appShell";
-import { ThemeProvider } from "@/lib/theme";
 import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
-import "../styles/mockup.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font",
-  weight: ["300", "400", "500", "600"],
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-mono",
-  weight: ["400", "500"],
-});
+import "../styles/tokens.css";
+import "../styles/app.css";
+import "../styles/landing.css";
 
 export const metadata: Metadata = {
-  title:       "promptcache · cache testing",
-  description: "Run prompt suites against real APIs and measure semantic cache hit rate, cost savings, and latency.",
+  title:       "inferencache",
+  description: "Multi-tier semantic caching for LLM APIs. Stop paying for the same prompt twice.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning data-theme="dark">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("promptcache-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);else if(window.matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();`,
-          }}
-        />
-      </head>
-      <body className="h-screen overflow-hidden antialiased" style={{ fontFamily: "var(--font), system-ui, sans-serif" }}>
-        <ThemeProvider>
-          <AppShellProvider>
-            <SkipLink />
-            {children}
-          </AppShellProvider>
-        </ThemeProvider>
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+      data-theme="dark"
+    >
+      <body
+        className="antialiased"
+        style={{ fontFamily: "var(--font-geist-sans, var(--sans))" }}
+      >
+        <AppShellProvider>
+          <SkipLink />
+          {children}
+        </AppShellProvider>
       </body>
     </html>
   );

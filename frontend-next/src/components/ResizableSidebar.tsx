@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { useAppShell, useMediaQuery } from "@/lib/appShell";
 
-const STORAGE_KEY = "promptcache-sidebar-width";
+const STORAGE_KEY = "inferencache-sidebar-width";
 const DEFAULT_W   = 252;
 const MIN_W       = 220;
 const MAX_W       = 520;

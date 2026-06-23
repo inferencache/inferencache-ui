@@ -1,7 +1,7 @@
 import { DbBrowser } from "@/components/DbBrowser";
 
 export const metadata = {
-  title: "promptcache · saved runs",
+  title: "inferencache · saved runs",
 };
 
 export default function DbPage() {

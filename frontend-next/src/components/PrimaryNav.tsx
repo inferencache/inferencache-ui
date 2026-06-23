@@ -16,7 +16,7 @@ export function PrimaryNav() {
     <div className="flex items-center gap-5 min-w-0">
       <Link href="/" className="topbar-brand shrink-0">
         <span className="topbar-brand-icon" aria-hidden>P</span>
-        <span className="topbar-brand-name">promptcache</span>
+        <span className="topbar-brand-name">inferencache</span>
       </Link>
 
       <nav className="topbar-nav" aria-label="Primary">

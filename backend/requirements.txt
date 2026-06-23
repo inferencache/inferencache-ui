@@ -1,3 +1,3 @@
-# Dev backend — install promptcache with serve extras from sibling repo:
-#   pip install -e ../../promptcache[embed,serve]
--e ../../promptcache[embed,serve]
+# Dev backend — install inferencache with serve extras from sibling repo:
+#   pip install -e ../../inferencache[embed,serve]
+-e ../../inferencache[embed,serve]

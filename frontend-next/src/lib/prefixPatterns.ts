@@ -1,4 +1,4 @@
-// SYNC: keep in sync with promptcache/src/promptcache/prefix.py DYNAMIC_SYSTEM_PROMPT_INDICATORS
+// SYNC: keep in sync with inferencache/src/inferencache/prefix.py DYNAMIC_SYSTEM_PROMPT_INDICATORS
 
 export const DYNAMIC_SYSTEM_PROMPT_INDICATORS = [
   "{user}",

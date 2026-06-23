@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { DashboardClient } from "@/components/DashboardClient";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export default function Home() {
-  return (
-    <Suspense fallback={null}>
-      <DashboardClient />
-    </Suspense>
-  );
+  return <LandingPage />;
 }

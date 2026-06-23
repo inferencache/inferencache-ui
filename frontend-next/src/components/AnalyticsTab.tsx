@@ -70,22 +70,21 @@ export function AnalyticsTab({ model }: Props) {
     a.click();
   }, [endpoints, model, window]);
 
+  const totalHits = tierData.reduce((acc, t) => acc + (t.hit_count ?? 0), 0);
+
   return (
-    <div className="flex flex-col gap-8 p-1">
+    <div className="analytics-page flex flex-col gap-[18px] p-1">
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-t-3 inline-flex items-center gap-1">
-            Window:
-            <InfoTip content={TIPS.analyticsWindow} placement="bottom" />
-          </span>
+      <div className="analytics-toolbar">
+        <div className="flex items-center gap-3">
+          <span className="pc-mono analytics-window-label">WINDOW</span>
           <div className="flex gap-1">
             {WINDOWS.map(w => (
               <button
                 key={w}
                 type="button"
                 onClick={() => setWindow(w)}
-                className={`filter-chip ${window === w ? "filter-chip-active" : ""}`}
+                className={`window-pill ${window === w ? "is-active" : ""}`}
               >
                 {w}
               </button>
@@ -93,30 +92,27 @@ export function AnalyticsTab({ model }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <button type="button" className="btn btn-outline btn-sm" onClick={load} disabled={loading}>
+          <button type="button" className="toolbar-btn" onClick={load} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </button>
-          <button type="button" className="btn btn-outline btn-sm" onClick={exportCsv}>
+          <button type="button" className="toolbar-btn" onClick={exportCsv}>
             Export CSV
           </button>
         </div>
       </div>
 
       {/* Hero: cumulative cost saved */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card analytics-hero">
+        <div className="analytics-hero-top">
           <div>
-            <div className="card-title">
-              <TitleWithTip tip={TIPS.costSavedChart} placement="bottom">
-                Cumulative cost saved
-              </TitleWithTip>
-            </div>
-            <div className="card-subtitle">
-              Total: <strong>{fmtCost(totalSaved)}</strong> over last {window}
-            </div>
+            <p className="pc-mono analytics-hero-label">CUMULATIVE COST SAVED</p>
+            <div className="pc-mono analytics-hero-value">{fmtCost(totalSaved)}</div>
+            <p className="analytics-hero-sub">
+              over last {window} · {totalHits} cache hits
+            </p>
           </div>
         </div>
-        <div className="card-body" style={{ height: 220 }}>
+        <div className="card-body analytics-hero-chart" style={{ height: 150 }}>
           {costData.length === 0 ? (
             <EmptyState label="Run a test suite to see cost savings" />
           ) : (

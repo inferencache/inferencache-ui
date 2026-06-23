@@ -16,6 +16,13 @@ import type { FalsePositiveRow, SimilarityBucket } from "@/types";
 const DEFAULT_SYSTEM_PROMPT =
   "You are a helpful assistant. Answer concisely and accurately.";
 
+const TYPE_PRESETS = [
+  { label: "CODE", value: "0.92" },
+  { label: "DETERMINISTIC", value: "0.95" },
+  { label: "RAG", value: "0.88" },
+  { label: "CONVERSATIONAL", value: "0.82" },
+] as const;
+
 interface Props {
   model:     string;
   threshold: number;
@@ -82,7 +89,7 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
           </div>
           <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className="btn-run-suite btn-run-suite-sm"
             onClick={() => onThresholdChange(simThresh)}
           >
             Apply
@@ -96,11 +103,22 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
             step={0.01}
             value={simThresh}
             onChange={e => setSimThresh(Number(e.target.value))}
-            className="w-full"
+            className="pc-slider w-full"
+            style={{
+              background: `linear-gradient(to right, #f97316 ${((simThresh - 0.5) / 0.49) * 100}%, #252b3b ${((simThresh - 0.5) / 0.49) * 100}%)`,
+            }}
           />
-          <div className="flex justify-between text-xs text-t-3">
+          <div className="flex justify-between text-xs text-t-3 pc-mono">
             <span>0.50 (permissive)</span>
             <span>0.99 (strict)</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {TYPE_PRESETS.map((p) => (
+              <div key={p.label} className="type-preset-chip">
+                <span className="type-preset-label pc-mono">{p.label}</span>
+                <span className="type-preset-value pc-mono">{p.value}</span>
+              </div>
+            ))}
           </div>
           {dist.length > 0 && (
             <p className="text-sm text-t-2">
@@ -209,9 +227,7 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                   <Bar key={b.bucket_floor} dataKey="count">
                     <Cell
                       key={`cell-${b.bucket_floor}`}
-                      fill={b.bucket_floor >= simThresh
-                        ? "var(--accent-green)"
-                        : "var(--accent-red)"}
+                      fill="#f97316"
                     />
                   </Bar>
                 ))}

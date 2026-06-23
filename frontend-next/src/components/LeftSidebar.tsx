@@ -27,11 +27,17 @@ interface Props {
     suite_name: string; model: string; provider: string; threshold: number; repeat_factor: number;
   }) => void;
   onViewRun: (detail: RunDetail) => void;
+  onRun?:       () => void;
+  onClear?:     () => void;
+  running?:     boolean;
+  keysReady?:   boolean;
+  onOpenKeys?:  () => void;
 }
 
 export function LeftSidebar({
   config, setConfig, suites, setSuites,
   refreshTick, onRerun, onViewRun,
+  onRun, onClear, running = false, keysReady = false, onOpenKeys,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<SidebarTab>("config");
@@ -236,7 +242,7 @@ export function LeftSidebar({
             <span className="rng-val">{config.threshold.toFixed(2)}</span>
           </div>
           <div className="mt-2">
-            <ConfigLabel tip={TIPS.delayMs}>Pause between calls</ConfigLabel>
+            <ConfigLabel tip={TIPS.delayMs}>Pause between calls (ms)</ConfigLabel>
             <input
               id="cache-delay-ms"
               type="number"
@@ -248,6 +254,37 @@ export function LeftSidebar({
               onChange={e => set("delay_between_ms", +e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="sidebar-run-actions">
+          {!keysReady && onOpenKeys && (
+            <button type="button" className="btn-clear-cache" onClick={onOpenKeys}>
+              Add API keys to run tests
+            </button>
+          )}
+          {onRun && (
+            <button
+              type="button"
+              className="btn-run-suite"
+              onClick={onRun}
+              disabled={running || !keysReady}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="#fff" aria-hidden>
+                <path d="M2 1.5v9l8-4.5z" />
+              </svg>
+              {running ? "Running…" : "Run test suite"}
+            </button>
+          )}
+          {onClear && (
+            <button
+              type="button"
+              className="btn-clear-cache"
+              onClick={onClear}
+              disabled={running}
+            >
+              Clear cache for this model
+            </button>
+          )}
         </div>
       </div>
       ) : (

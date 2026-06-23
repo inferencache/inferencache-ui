@@ -131,21 +131,8 @@ export function DbBrowser() {
   }
 
   return (
-    <div className="app-shell h-screen overflow-hidden">
-      <AppNavbar
-        page="saved-runs"
-        rightExtra={
-          <button
-            type="button"
-            onClick={loadRuns}
-            disabled={loading}
-            aria-busy={loading}
-            className="navbar-menu-item w-full"
-          >
-            <span className="navbar-menu-item-label">{loading ? "Loading…" : "↻ Refresh runs"}</span>
-          </button>
-        }
-      />
+    <>
+      <AppNavbar page="saved-runs" />
 
       {error && (
         <div role="alert" className="ge-alert ge-alert-error mx-4 mt-2 shrink-0">
@@ -168,7 +155,7 @@ export function DbBrowser() {
                   <h1 className="page-title">Saved runs</h1>
                 </div>
                 <span className="text-xs cell-mono text-t-3" title="Local database file">
-                  ~/.cache/promptcache-dashboard/runs.db
+                  ~/.cache/inferencache/runs.db
                 </span>
               </div>
             </div>
@@ -400,6 +387,6 @@ export function DbBrowser() {
             </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -13,9 +13,7 @@ import { TuningTab }       from "@/components/TuningTab";
 import { LeftSidebar }     from "@/components/LeftSidebar";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { ApiKeysModal }    from "@/components/ApiKeysModal";
-import {
-  fetchSuites, downloadTimelineCsv, fetchAnalysis, setThreshold,
-} from "@/lib/api";
+import { fetchSuites, setThreshold } from "@/lib/api";
 import { useRunSession }   from "@/lib/useRunSession";
 import { useApiKeys }      from "@/lib/useApiKeys";
 import type { RunConfig, RunDetail } from "@/types";
@@ -111,29 +109,14 @@ export function DashboardClient() {
     [openaiKey, anthropicKey],
   );
 
-  const handleExportCsv = useCallback(() => {
-    downloadTimelineCsv(timeline, `run-${runId ?? "export"}.csv`);
-  }, [timeline, runId]);
-
   const hasKey   = keyStatuses.openai || keyStatuses.anthropic;
 
   return (
-    <div className="app-shell h-screen overflow-hidden">
+    <>
       <AppNavbar
         page="dashboard"
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        running={running}
-        phase={phase}
-        progress={progress}
-        total={total}
-        keyCount={keys.length}
-        keysReady={hasKey}
-        onOpenKeys={openKeys}
-        onRun={handleRun}
-        onClear={handleClear}
-        hasChart={timeline.length > 0}
-        onExportCsv={handleExportCsv}
       />
 
       <div className="app-shell-body">
@@ -144,6 +127,11 @@ export function DashboardClient() {
             refreshTick={refreshTick}
             onRerun={handleRerun}
             onViewRun={handleViewRun}
+            onRun={handleRun}
+            onClear={handleClear}
+            running={running}
+            keysReady={hasKey}
+            onOpenKeys={openKeys}
           />
         </ResizableSidebar>
 
@@ -198,6 +186,6 @@ export function DashboardClient() {
       {showKeyModal && (
         <ApiKeysModal keys={keys} onAdd={addKey} onDelete={deleteKey} onClose={closeKeys} />
       )}
-    </div>
+    </>
   );
 }

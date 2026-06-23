@@ -44,7 +44,7 @@ export const NAV_ITEMS: NavItemDef[] = [
   {
     id: "saved-runs",
     label: "Saved runs",
-    href: "/db",
+    href: "/dashboard/db",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
         <circle cx="12" cy="12" r="10" />
@@ -55,5 +55,5 @@ export const NAV_ITEMS: NavItemDef[] = [
 ];
 
 export function tabHref(tab: DashboardTab): string {
-  return tab === "live" ? "/" : `/?tab=${tab}`;
+  return tab === "live" ? "/dashboard/" : `/dashboard/?tab=${tab}`;
 }
