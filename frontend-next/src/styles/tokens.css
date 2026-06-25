@@ -1,0 +1,105 @@
+/* Shared design tokens — inferencache */
+
+:root {
+  color-scheme: dark;
+
+  /* App shell (dashboard) */
+  --app-bg: #0c0e13;
+  --app-surface: #13161e;
+  --app-surface-deep: #0c0e13;
+  --app-surface-input: #13161e;
+  --app-border: rgba(255, 255, 255, 0.06);
+  --app-border-strong: rgba(255, 255, 255, 0.08);
+  --app-text: #e9edf3;
+  --app-text-secondary: #cdd3dc;
+  --app-text-muted: #565d6b;
+  --app-text-dim: #8b929e;
+
+  /* Landing */
+  --landing-bg: #0f1219;
+  --landing-surface: #111827;
+  --landing-border: #1e2737;
+
+  /* Accents */
+  --green: #10d9a0;
+  --green-dim: #9be8cd;
+  --amber: #f5a623;
+  --red: #f06a6a;
+  --purple: #a78bfa;
+  --action: #f97316;
+  --action-gradient: linear-gradient(180deg, #fb8c3e, #f97316);
+  --landing-accent: #b86a2a;
+
+  --mono: var(--font-mono, 'Geist Mono', monospace);
+  --sans: var(--font, 'Geist', system-ui, sans-serif);
+
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --nav-h: 60px;
+}
+
+::selection {
+  background: rgba(16, 217, 160, 0.22);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #20242e;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input[type="range"].pc-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  outline: none;
+}
+
+input[type="range"].pc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.18);
+}
+
+input[type="range"].pc-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: #f4f4f5;
+  cursor: pointer;
+}
+
+@keyframes pc-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pc-slidein {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pc-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.pc-mono {
+  font-family: var(--mono);
+}

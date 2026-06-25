@@ -13,6 +13,7 @@ import type {
   RunEvent,
   RunRecord,
   SimilarityBucket,
+  TierBreakdownRow,
   ThresholdRecommendation,
   TimeWindow,
 } from "@/types";
@@ -20,7 +21,7 @@ import { MODEL_OUTPUT_CPT, costPerToken } from "@/lib/models";
 
 export { costPerToken };
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export async function fetchSuites(): Promise<string[]> {
   const res = await fetch(`${BASE}/suites`);
@@ -221,39 +222,59 @@ export async function applyThreshold(
 }
 
 // ── Analytics endpoints (spec §8) ─────────────────────────────────────────────
+// Prefer /cache-stats/ — ad blockers often block URLs containing "analytics".
+
+async function fetchStatsData<T>(path: string, query: string): Promise<T[]> {
+  for (const prefix of ["cache-stats", "analytics"]) {
+    try {
+      const res = await fetch(`${BASE}/${prefix}/${path}?${query}`);
+      if (res.ok) return (await res.json()).data ?? [];
+    } catch {
+      /* try fallback prefix */
+    }
+  }
+  return [];
+}
 
 export async function fetchHitRate(
   model: string,
   windowHours = 24,
   bucketMinutes = 30,
 ): Promise<HitRateBucket[]> {
-  const res = await fetch(
-    `${BASE}/analytics/hit-rate?model=${encodeURIComponent(model)}&window_hours=${windowHours}&bucket_minutes=${bucketMinutes}`
+  return fetchStatsData(
+    "hit-rate",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}&bucket_minutes=${bucketMinutes}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchCostSaved(
   model: string,
   windowHours = 24,
 ): Promise<CostSavedPoint[]> {
-  const res = await fetch(
-    `${BASE}/analytics/cost-saved?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  return fetchStatsData(
+    "cost-saved",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchEndpoints(
   model: string,
   windowHours = 24,
 ): Promise<EndpointRow[]> {
-  const res = await fetch(
-    `${BASE}/analytics/endpoints?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  return fetchStatsData(
+    "endpoints",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
+}
+
+export async function fetchTierBreakdown(
+  model: string,
+  windowHours = 24,
+): Promise<TierBreakdownRow[]> {
+  return fetchStatsData(
+    "tier-breakdown",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}`,
+  );
 }
 
 export async function fetchSimilarityDist(
@@ -261,11 +282,10 @@ export async function fetchSimilarityDist(
   windowHours = 24,
   buckets = 20,
 ): Promise<SimilarityBucket[]> {
-  const res = await fetch(
-    `${BASE}/analytics/similarity-dist?model=${encodeURIComponent(model)}&window_hours=${windowHours}&buckets=${buckets}`
+  return fetchStatsData(
+    "similarity-dist",
+    `model=${encodeURIComponent(model)}&window_hours=${windowHours}&buckets=${buckets}`,
   );
-  if (!res.ok) return [];
-  return (await res.json()).data ?? [];
 }
 
 export async function fetchAlerts(model: string): Promise<AlertState | null> {
@@ -293,21 +313,64 @@ export async function fetchFalsePositives(
     `${BASE}/tuning/false-positives?model=${encodeURIComponent(model)}&limit=${limit}`
   );
   if (!res.ok) return [];
-  return (await res.json()).data ?? [];
+  const rows: Partial<FalsePositiveRow>[] = (await res.json()).data ?? [];
+  return rows.map((row) => ({
+    id: row.id ?? 0,
+    prompt_hash: row.prompt_hash ?? "",
+    similarity: row.similarity ?? 0,
+    timestamp: row.timestamp ?? 0,
+    original_prompt: row.original_prompt ?? "",
+    cached_response: row.cached_response ?? "",
+  }));
 }
 
-/** Build a chart-output.com URL pre-loaded with timeline CSV */
-export function buildChartOutputUrl(
-  points: Array<{ idx: number; hit_ms: number | null; miss_ms: number | null; cost: number }>
+export type TimelineExportPoint = {
+  idx:     number;
+  hit_ms:  number | null;
+  miss_ms: number | null;
+  cost:    number;
+  tokens?: number;
+  type?:   string;
+};
+
+/** Build CSV text for a run timeline export. */
+export function buildTimelineCsv(
+  points: TimelineExportPoint[],
 ): string {
-  if (points.length === 0) return "https://chart-output.com";
   const rows = [
-    "call,latency_ms,cost_usd,type",
+    "call,type,latency_ms,cost_usd,tokens",
     ...points.map((p) => {
-      const type = p.hit_ms !== null ? "cache" : "api";
+      const type = p.type ?? (p.hit_ms !== null ? "cache" : "api");
       const ms = p.hit_ms ?? p.miss_ms ?? 0;
-      return `${p.idx + 1},${ms.toFixed(1)},${(p.cost ?? 0).toFixed(8)},${type}`;
+      return [
+        p.idx + 1,
+        type,
+        ms.toFixed(1),
+        (p.cost ?? 0).toFixed(8),
+        p.tokens ?? 0,
+      ].join(",");
     }),
-  ].join("\n");
-  return `https://chart-output.com/?data=${encodeURIComponent(rows)}`;
+  ];
+  return rows.join("\n");
+}
+
+/** Trigger a browser download of the run timeline CSV. */
+export function downloadTimelineCsv(
+  points: TimelineExportPoint[],
+  filename = "run-export.csv",
+): void {
+  if (points.length === 0) return;
+  const blob = new Blob([buildTimelineCsv(points)], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+/** @deprecated chart-output.com no longer accepts ?data= CSV URLs */
+export function buildChartOutputUrl(points: TimelineExportPoint[]): string {
+  if (points.length === 0) return "https://chart-output.com";
+  return `https://chart-output.com/?data=${encodeURIComponent(buildTimelineCsv(points))}`;
 }

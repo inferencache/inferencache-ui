@@ -10,7 +10,8 @@ import {
 
 export type Theme = "light" | "dark";
 
-const STORAGE_KEY = "promptcache-theme";
+const STORAGE_KEY = "inferencache-theme";
+const LEGACY_STORAGE_KEY = "promptcache-theme";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -25,10 +26,12 @@ function applyTheme(theme: Theme) {
 }
 
 function readStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+  if (typeof window === "undefined") return "dark";
+  const stored = (
+    localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
+  ) as Theme | null;
   if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

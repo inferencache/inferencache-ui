@@ -10,7 +10,18 @@ import {
 } from "@/lib/api";
 import { TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
+import { analyzeSystemPrompt } from "@/lib/prefixPatterns";
 import type { FalsePositiveRow, SimilarityBucket } from "@/types";
+
+const DEFAULT_SYSTEM_PROMPT =
+  "You are a helpful assistant. Answer concisely and accurately.";
+
+const TYPE_PRESETS = [
+  { label: "CODE", value: "0.92" },
+  { label: "DETERMINISTIC", value: "0.95" },
+  { label: "RAG", value: "0.88" },
+  { label: "CONVERSATIONAL", value: "0.82" },
+] as const;
 
 interface Props {
   model:     string;
@@ -24,6 +35,9 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
   const [simThresh,  setSimThresh]  = useState(threshold);
   const [loading,    setLoading]    = useState(false);
   const [unflagging, setUnflagging] = useState<number | null>(null);
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+
+  const prefixAnalysis = analyzeSystemPrompt(systemPrompt);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,9 +73,9 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
     : "—";
 
   return (
-    <div className="flex flex-col gap-8 p-1">
+    <div className="flex flex-col gap-[18px]">
       {/* Threshold slider */}
-      <div className="ge-card">
+      <div className="ge-card tuning-card">
         <div className="card-header">
           <div>
             <div className="card-title">
@@ -70,12 +84,13 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
               </TitleWithTip>
             </div>
             <div className="card-subtitle">
-              Higher = stricter matching. Current: <strong>{simThresh.toFixed(2)}</strong>
+              Higher = stricter matching. Current:{" "}
+              <span className="pc-mono text-t-1">{simThresh.toFixed(2)}</span>
             </div>
           </div>
           <button
             type="button"
-            className="btn btn-primary btn-sm"
+            className="btn-run-suite btn-run-suite-sm"
             onClick={() => onThresholdChange(simThresh)}
           >
             Apply
@@ -89,11 +104,22 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
             step={0.01}
             value={simThresh}
             onChange={e => setSimThresh(Number(e.target.value))}
-            className="w-full"
+            className="pc-slider w-full"
+            style={{
+              background: `linear-gradient(to right, #f97316 ${((simThresh - 0.5) / 0.49) * 100}%, #252b3b ${((simThresh - 0.5) / 0.49) * 100}%)`,
+            }}
           />
-          <div className="flex justify-between text-xs text-t-3">
+          <div className="flex justify-between text-xs text-t-3 pc-mono">
             <span>0.50 (permissive)</span>
             <span>0.99 (strict)</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {TYPE_PRESETS.map((p) => (
+              <div key={p.label} className="type-preset-chip">
+                <span className="type-preset-label pc-mono">{p.label}</span>
+                <span className="type-preset-value pc-mono">{p.value}</span>
+              </div>
+            ))}
           </div>
           {dist.length > 0 && (
             <p className="text-sm text-t-2">
@@ -105,22 +131,69 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
         </div>
       </div>
 
+      {/* Prefix optimizer */}
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0 !pb-0">
+          <div>
+            <div className="card-title flex flex-wrap items-center gap-x-3 gap-y-1">
+              Prefix optimizer
+              <span className="text-[12.5px] font-normal text-t-2">
+                System prompt stability:{" "}
+                <strong className={
+                  prefixAnalysis.stability_score >= 0.75
+                    ? "data-cell-green"
+                    : prefixAnalysis.stability_score >= 0.5
+                      ? "data-cell-yellow"
+                      : "data-cell-red"
+                }>
+                  {(prefixAnalysis.stability_score * 100).toFixed(0)}%
+                </strong>
+              </span>
+            </div>
+            <p className="card-subtitle mt-1">
+              System prompt — stable content should not change between requests.
+            </p>
+          </div>
+        </div>
+        <div className="card-body flex flex-col gap-0">
+          <textarea
+            id="system-prompt-input"
+            className="prefix-textarea"
+            value={systemPrompt}
+            onChange={e => setSystemPrompt(e.target.value)}
+            placeholder="Enter your system prompt…"
+          />
+          {prefixAnalysis.warnings.length > 0 ? (
+            <ul className="text-sm text-t-2 flex flex-col gap-1 mt-3">
+              {prefixAnalysis.warnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="data-cell-yellow shrink-0">⚠</span>
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="prefix-success-banner">
+              <span className="data-cell-green">✓</span>
+              <span>No dynamic content detected — good prefix cache stability.</span>
+            </div>
+          )}
+          <p className="text-xs text-t-3 mt-3.5">
+            Tip: move file paths, timestamps, and user-specific values to the
+            end of the message array instead of the system prompt.
+          </p>
+        </div>
+      </div>
+
       {/* Similarity histogram */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0">
           <div className="card-title">
             <TitleWithTip tip={TIPS.similarityDist} placement="bottom">
               Similarity distribution
             </TitleWithTip>
           </div>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? "Loading…" : "Refresh"}
-          </button>
+          <span className="card-subtitle">Threshold at {simThresh.toFixed(2)}</span>
         </div>
         <div className="card-body" style={{ height: 220 }}>
           {dist.length === 0 ? (
@@ -151,9 +224,7 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                   <Bar key={b.bucket_floor} dataKey="count">
                     <Cell
                       key={`cell-${b.bucket_floor}`}
-                      fill={b.bucket_floor >= simThresh
-                        ? "var(--accent-green)"
-                        : "var(--accent-red)"}
+                      fill="#f97316"
                     />
                   </Bar>
                 ))}
@@ -164,23 +235,24 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
       </div>
 
       {/* False positive review queue */}
-      <div className="ge-card">
-        <div className="card-header">
-          <div>
-            <div className="card-title">
-              <TitleWithTip tip={TIPS.falsePositiveQueue} placement="bottom">
-                False positive queue
-              </TitleWithTip>
-            </div>
-            <div className="card-subtitle">
-              Semantic hits flagged from the Call drawer
-            </div>
+      <div className="ge-card tuning-card">
+        <div className="card-header !border-b-0 !pb-0">
+          <div className="card-title">
+            <TitleWithTip tip={TIPS.falsePositiveQueue} placement="bottom">
+              False positive queue
+            </TitleWithTip>
           </div>
+          <p className="card-subtitle mt-1">
+            Semantic hits flagged from the call drawer during a test run.
+          </p>
         </div>
-        <div className="card-body p-0">
+        <div className="card-body p-0 pt-2">
           {fps.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-t-3">
-              No false positives flagged yet
+            <div className="fp-empty-state">
+              <div className="fp-empty-title">No false positives flagged yet</div>
+              <div className="fp-empty-sub">
+                Open any SEM row in the call drawer and flag suspicious matches to triage them here.
+              </div>
             </div>
           ) : (
             <div className="table-responsive">
@@ -195,13 +267,17 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {fps.map(r => (
+                  {fps.map(r => {
+                    const similarity = r.similarity ?? 0;
+                    return (
                     <tr key={r.id}>
                       <td className="cell-mono data-cell-yellow">
-                        {r.similarity.toFixed(4)}
+                        {similarity > 0 ? similarity.toFixed(4) : "—"}
                       </td>
                       <td className="cell-mono text-xs text-t-3">
-                        {new Date(r.timestamp * 1000).toLocaleString()}
+                        {r.timestamp
+                          ? new Date(r.timestamp * 1000).toLocaleString()
+                          : "—"}
                       </td>
                       <td className="text-xs max-w-[200px] truncate" title={r.original_prompt}>
                         {r.original_prompt}
@@ -220,7 +296,8 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

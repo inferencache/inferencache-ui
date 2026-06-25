@@ -66,6 +66,10 @@ export interface RunEvent {
   error_messages?: string[];
   // error
   message?:        string;
+  // multi-tier fields
+  tier1_hit?:       boolean;
+  tier2_cached_tokens?: number;
+  tier3_hit?:       boolean;
 }
 
 // ── Analytics types ───────────────────────────────────────────────────────────
@@ -94,6 +98,14 @@ export interface EndpointRow {
   cost_saved_usd: number;
 }
 
+export interface TierBreakdownRow {
+  tier:         "tier1_semantic" | "tier2_prefix" | "tier3_inference";
+  label:        string;
+  tokens_saved: number;
+  cost_saved:   number;
+  hit_count:    number;
+}
+
 export interface SimilarityBucket {
   bucket_floor: number;
   count:        number;
@@ -110,10 +122,10 @@ export interface AlertState {
 export interface FalsePositiveRow {
   id:               number;
   prompt_hash:      string;
-  similarity:       number;
-  timestamp:        number;
-  original_prompt:  string;
-  cached_response:  string;
+  similarity?:      number;
+  timestamp?:       number;
+  original_prompt?: string;
+  cached_response?: string;
 }
 
 export type TimeWindow = "1h" | "6h" | "24h" | "7d" | "30d";

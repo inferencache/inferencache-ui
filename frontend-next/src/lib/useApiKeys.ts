@@ -9,11 +9,12 @@ export interface StoredKey {
   value: string;
 }
 
-const LS_KEY = "promptcache:api-keys";
+const LS_KEY = "inferencache:api-keys";
+const LEGACY_LS_KEY = "promptcache:api-keys";
 
 function loadFromStorage(): StoredKey[] {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(LS_KEY) ?? localStorage.getItem(LEGACY_LS_KEY);
     return raw ? (JSON.parse(raw) as StoredKey[]) : [];
   } catch {
     return [];

@@ -51,7 +51,6 @@ export function DbBrowser() {
   const [error,      setError]      = useState<string | null>(null);
   const [search,     setSearch]     = useState("");
   const [callFilter, setCallFilter] = useState<CallFilter>("all");
-  const [sortSim,    setSortSim]    = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const loadRuns = useCallback(async () => {
@@ -101,14 +100,8 @@ export function DbBrowser() {
     if (callFilter !== "all") {
       calls = calls.filter((c) => c.hit_type === callFilter);
     }
-    if (sortSim) {
-      calls = [...calls].sort(
-        (a, b) =>
-          (b.best_similarity ?? b.similarity) - (a.best_similarity ?? a.similarity),
-      );
-    }
     return calls;
-  }, [detail, callFilter, sortSim]);
+  }, [detail, callFilter]);
 
   async function handleDelete(runId: string) {
     if (pendingDelete !== runId) {
@@ -131,21 +124,8 @@ export function DbBrowser() {
   }
 
   return (
-    <div className="app-shell h-screen overflow-hidden">
-      <AppNavbar
-        page="saved-runs"
-        rightExtra={
-          <button
-            type="button"
-            onClick={loadRuns}
-            disabled={loading}
-            aria-busy={loading}
-            className="navbar-menu-item w-full"
-          >
-            <span className="navbar-menu-item-label">{loading ? "Loading…" : "↻ Refresh runs"}</span>
-          </button>
-        }
-      />
+    <>
+      <AppNavbar page="saved-runs" />
 
       {error && (
         <div role="alert" className="ge-alert ge-alert-error mx-4 mt-2 shrink-0">
@@ -161,6 +141,7 @@ export function DbBrowser() {
       )}
 
       <div className="app-shell-body">
+        <div className="main-column">
         <div id="main-content" tabIndex={-1} className="page-wrapper flex flex-col flex-1 min-h-0 gap-8 outline-none w-full overflow-y-auto">
             <div className="page-header shrink-0">
               <div className="page-header-row">
@@ -168,28 +149,25 @@ export function DbBrowser() {
                   <h1 className="page-title">Saved runs</h1>
                 </div>
                 <span className="text-xs cell-mono text-t-3" title="Local database file">
-                  ~/.cache/promptcache-dashboard/runs.db
+                  ~/.cache/inferencache/runs.db
                 </span>
               </div>
             </div>
 
-            <div className="ge-card flex flex-1 min-h-0 overflow-hidden">
-              <div className="db-split">
-        {/* Left: runs table */}
+            <div className="db-split flex-1 min-h-0">
+        {/* Left: runs list */}
         <div className="db-runs-pane">
-          <div className="card-header shrink-0 !border-b">
-            <div>
-              <div className="card-title">Runs</div>
-              <div className="card-subtitle">{filteredRuns.length} row{filteredRuns.length !== 1 ? "s" : ""}</div>
-            </div>
+          <div className="db-runs-header">
+            <div className="card-title">Runs</div>
+            <div className="card-subtitle">{filteredRuns.length} row{filteredRuns.length !== 1 ? "s" : ""}</div>
           </div>
-          <div className="px-4 py-3 shrink-0 section-divider-b">
+          <div className="db-runs-search">
             <input
               type="search"
               placeholder="Search by run ID, suite, or model…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="ge-input text-xs"
+              className="ge-input"
             />
           </div>
 
@@ -223,7 +201,7 @@ export function DbBrowser() {
                         selectedId === run.id && "row-selected",
                       )}
                     >
-                      <td className="cell-mono data-cell-teal">{run.id}</td>
+                      <td className="cell-mono">{run.id.slice(0, 8)}</td>
                       <td className="truncate max-w-[100px]">{run.suite_name}</td>
                       <td className="truncate max-w-[90px]">{run.model}</td>
                       <td className="text-right data-cell-green">
@@ -287,8 +265,7 @@ export function DbBrowser() {
                   <div className="card-subtitle">{fmtDate(detail.created_at)}</div>
                 </div>
               </div>
-              <div className="px-5 py-4 shrink-0 section-divider-b">
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
+              <div className="db-meta-grid shrink-0">
                   <MetaCell label="Suite" value={detail.suite_name} />
                   <MetaCell label="Model" value={detail.model} />
                   <MetaCell label="Provider" value={detail.provider} />
@@ -303,19 +280,18 @@ export function DbBrowser() {
                   <MetaCell label="Calls" value={String(detail.total_calls)} />
                   {detail.batch_id && <MetaCell label="Batch" value={detail.batch_id} />}
                   {detail.cache_mode && <MetaCell label="Cache mode" value={detail.cache_mode} />}
-                </div>
               </div>
 
-              <div className="flex items-center gap-2 px-5 py-2.5 shrink-0 card-header !py-2">
-                <span className="card-title mr-2">Call records</span>
+              <div className="flex items-center gap-2 px-5 py-3.5 shrink-0 border-t border-[var(--b1)] db-call-filters">
+                <span className="card-title mr-1 text-[13px]">Call records</span>
                 {(["all", "exact", "semantic", "miss"] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setCallFilter(f)}
                     className={clsx(
-                      "btn btn-sm capitalize",
-                      callFilter === f ? "btn-primary" : "btn-outline",
+                      "filter-pill capitalize",
+                      callFilter === f && "is-active",
                     )}
                     aria-pressed={callFilter === f}
                   >
@@ -323,14 +299,6 @@ export function DbBrowser() {
                   </button>
                 ))}
                 <div className="flex-1" />
-                <button
-                  type="button"
-                  onClick={() => setSortSim((s) => !s)}
-                  className={clsx("btn btn-sm", sortSim ? "btn-primary" : "btn-outline")}
-                  aria-pressed={sortSim}
-                >
-                  Sort by similarity
-                </button>
                 <span className="text-2xs cell-mono text-t-3">
                   {filteredCalls.length} row{filteredCalls.length !== 1 ? "s" : ""}
                 </span>
@@ -396,10 +364,10 @@ export function DbBrowser() {
             </>
           ) : null}
         </div>
-              </div>
             </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

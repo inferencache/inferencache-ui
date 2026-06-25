@@ -1,0 +1,567 @@
+/* Dashboard visual alignment with docs/promptcache-app.dc.html mock */
+
+.app-shell {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── Sidebar (flat, no tabs) ── */
+.app-shell .controls-panel {
+  background: var(--s0);
+  border-right: 1px solid var(--b1);
+}
+
+.app-shell .sidebar-body {
+  padding: 22px;
+  gap: 22px;
+  overflow-y: auto;
+}
+
+.app-shell .sidebar-body::-webkit-scrollbar { width: 9px; }
+.app-shell .sidebar-body::-webkit-scrollbar-thumb { background: #20242e; border-radius: 6px; }
+
+.app-shell .sidebar-tabs {
+  display: none;
+}
+
+.app-shell .cfg {
+  padding: 0;
+  overflow: visible;
+  flex: none;
+}
+
+.app-shell .sidebar-past-runs {
+  margin-top: 4px;
+  border-top: 1px solid var(--b1);
+  padding-top: 16px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell .sidebar-past-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--t3);
+  margin-bottom: 11px;
+}
+
+.app-shell .run-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.app-shell .ri {
+  padding: 9px 8px;
+  border-radius: 7px;
+}
+
+.app-shell .ri:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.app-shell .ri-id {
+  font-size: 12px;
+  color: #cdd3dc;
+}
+
+.app-shell .ri-name {
+  font-size: 11px;
+  color: var(--t3);
+  font-weight: 400;
+}
+
+.app-shell .ri-info {
+  display: none;
+}
+
+/* ── Unified dashboard cards (#13161e surface) ── */
+.app-shell .card,
+.app-shell .ge-card {
+  background: #13161e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.app-shell .ge-card.rounded-mock,
+.app-shell .analytics-hero,
+.app-shell .db-runs-pane,
+.app-shell .db-detail-pane {
+  border-radius: 14px;
+}
+
+.app-shell .cp {
+  padding: 18px;
+}
+
+.app-shell .card-hdr {
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.app-shell .card-ttl {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #cdd3dc;
+  gap: 0;
+}
+
+.app-shell .card-ttl svg {
+  display: none;
+}
+
+.app-shell .leg-i {
+  font-size: 11.5px;
+  color: var(--t2);
+}
+
+.app-shell .leg-d {
+  width: 14px;
+}
+
+.app-shell .bar-track {
+  height: 10px;
+  border-radius: 6px;
+  background: #0c0e13;
+}
+
+.app-shell .bar-foot {
+  margin-top: 11px;
+  font-size: 11.5px;
+  font-family: var(--mono);
+  color: var(--t2);
+}
+
+.app-shell .charts-row {
+  gap: 16px;
+}
+
+.app-shell .chart-wrap {
+  height: 200px;
+}
+
+/* ── Progress card ── */
+.app-shell .progress-card .progress-status {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.app-shell .progress-card .progress-count {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--t2);
+}
+
+.app-shell .progress-card .progress-elapsed {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--t2);
+}
+
+.app-shell .progress-card .progress-bar-track {
+  height: 6px;
+  border-radius: 4px;
+  background: #0c0e13;
+  overflow: hidden;
+}
+
+.app-shell .progress-card .progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0c8f6b, #10d9a0);
+  transition: width 0.2s;
+}
+
+.app-shell .progress-card .progress-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 13px;
+}
+
+.app-shell .progress-card .progress-saved {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--t3);
+}
+
+.app-shell .mock-action-btn {
+  height: 30px;
+  padding: 0 14px;
+  background: #171b24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  color: #a0a7b4;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-shell .mock-action-btn:hover {
+  color: var(--t1);
+}
+
+/* ── Call log ── */
+.app-shell .log-card {
+  border-radius: 12px;
+}
+
+.app-shell .log-hdr {
+  padding: 16px 18px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.app-shell .log-ttl {
+  font-size: 13.5px;
+  color: #cdd3dc;
+}
+
+.app-shell .log-n {
+  font-size: 12px;
+}
+
+.app-shell .fpills {
+  gap: 5px;
+}
+
+.app-shell .fp {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  border: 1px solid var(--b2);
+}
+
+.app-shell .fp.on {
+  background: var(--s3);
+  color: var(--t1);
+  border-color: var(--b3);
+}
+
+/* ── Analytics ── */
+.app-shell .analytics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.app-shell .analytics-window-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--t3);
+}
+
+.app-shell .window-pill {
+  height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--b2);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--t2);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.app-shell .window-pill.is-active {
+  background: var(--s3);
+  color: var(--t1);
+  border-color: var(--b3);
+}
+
+.app-shell .toolbar-btn {
+  height: 32px;
+  padding: 0 14px;
+  background: #171b24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #a0a7b4;
+  font-size: 12.5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app-shell .toolbar-btn:hover:not(:disabled) {
+  color: var(--t1);
+}
+
+.app-shell .analytics-hero {
+  padding: 26px 28px;
+  border-radius: 14px;
+}
+
+.app-shell .analytics-hero-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.app-shell .analytics-hero-label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--t3);
+  margin-bottom: 12px;
+}
+
+.app-shell .analytics-hero-value {
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 500;
+  letter-spacing: -2px;
+  color: var(--green);
+  line-height: 0.95;
+}
+
+.app-shell .analytics-hero-sub {
+  font-size: 13px;
+  color: var(--t2);
+  margin-top: 10px;
+}
+
+.app-shell .analytics-hero-tokens {
+  text-align: right;
+}
+
+.app-shell .analytics-hero-tokens-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--purple);
+}
+
+.app-shell .analytics-hero-tokens-sub {
+  font-size: 11.5px;
+  color: var(--t3);
+  margin-top: 3px;
+}
+
+.app-shell .analytics-hero-chart {
+  margin-top: 18px;
+  padding: 0 !important;
+}
+
+.app-shell .card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #cdd3dc;
+}
+
+.app-shell .card-subtitle {
+  font-size: 12px;
+  color: var(--t3);
+}
+
+.app-shell .card-header {
+  padding: 18px 20px;
+}
+
+.app-shell .chart-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 11.5px;
+  color: var(--t2);
+}
+
+.app-shell .chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-shell .chart-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Tier breakdown grid (not table) */
+.app-shell .tier-grid-header,
+.app-shell .tier-grid-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.app-shell .tier-grid-header {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  color: var(--t3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.app-shell .tier-grid-row {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.app-shell .tier-grid-name {
+  font-size: 13.5px;
+  color: var(--t1);
+}
+
+.app-shell .tier-grid-note {
+  font-size: 11.5px;
+  color: var(--t3);
+  margin-top: 3px;
+  max-width: 520px;
+}
+
+.app-shell .tier-grid-row .cell-cost {
+  text-align: right;
+}
+
+/* ── Tuning ── */
+.app-shell .tuning-card {
+  padding: 22px 24px;
+  border-radius: 14px;
+}
+
+.app-shell .tuning-card .card-header {
+  padding: 0 0 22px;
+  border-bottom: none;
+}
+
+.app-shell .tuning-card .card-body {
+  padding: 0;
+}
+
+.app-shell .prefix-textarea {
+  width: 100%;
+  min-height: 110px;
+  background: #0c0e13;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--t1);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 14px;
+  outline: none;
+  resize: vertical;
+}
+
+.app-shell .prefix-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 14px;
+  background: rgba(16, 217, 160, 0.06);
+  border: 1px solid rgba(16, 217, 160, 0.18);
+  border-radius: 9px;
+  font-size: 13px;
+  color: #9be8cd;
+}
+
+.app-shell .fp-empty-state {
+  text-align: center;
+  padding: 34px 0;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.app-shell .fp-empty-title {
+  font-size: 13px;
+  color: var(--t2);
+}
+
+.app-shell .fp-empty-sub {
+  font-size: 12px;
+  color: var(--t3);
+  margin-top: 6px;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-shell .type-preset-chip {
+  background: #0f1218;
+}
+
+/* ── Saved runs page ── */
+.app-shell .page-wrapper {
+  padding: 24px 26px;
+  gap: 20px;
+}
+
+.app-shell .db-split {
+  grid-template-columns: minmax(420px, 1fr) 1.5fr;
+  gap: 18px;
+  min-height: 560px;
+}
+
+.app-shell .db-runs-pane,
+.app-shell .db-detail-pane {
+  background: #13161e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 560px;
+}
+
+.app-shell .db-runs-header {
+  padding: 16px 18px;
+}
+
+.app-shell .db-runs-search {
+  padding: 0 18px 13px;
+}
+
+.app-shell .ge-table tbody tr.row-selected {
+  box-shadow: inset 3px 0 0 var(--action);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-shell .db-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px 14px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.app-shell .db-call-filters .filter-pill {
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--b2);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--t2);
+  font-size: 11.5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app-shell .db-call-filters .filter-pill.is-active {
+  background: var(--s3);
+  color: var(--t1);
+  border-color: var(--b3);
+}
+
+@media (max-width: 900px) {
+  .app-shell .db-split {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell .db-meta-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .app-shell .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,20 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import clsx from "clsx";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  fetchHitRate, fetchCostSaved, fetchEndpoints, fmtCost,
+  fetchHitRate, fetchCostSaved, fetchEndpoints, fetchTierBreakdown, fmtCost,
 } from "@/lib/api";
 import { InfoTip, TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
-import type { CostSavedPoint, EndpointRow, HitRateBucket, TimeWindow } from "@/types";
+import type { CostSavedPoint, EndpointRow, HitRateBucket, TierBreakdownRow, TimeWindow } from "@/types";
 import { WINDOW_HOURS } from "@/types";
 
 interface Props {
-  model: string;
+  model:       string;
+  refreshTick?: number;
 }
 
 const WINDOWS: TimeWindow[] = ["1h", "6h", "24h", "7d", "30d"];
@@ -25,33 +27,51 @@ function formatTs(unixSec: number): string {
   });
 }
 
-export function AnalyticsTab({ model }: Props) {
+const TIER_NOTES: Record<string, string> = {
+  tier1_semantic:
+    "Client-side, free. Matches exact and near-duplicate prompts before any request leaves your machine.",
+  tier2_prefix:
+    "Zero until prefix optimization keeps a stable system prompt across calls — then the provider discounts cached input tokens.",
+  tier3_inference:
+    "Zero until the provider returns a server-side cached completion for an identical request within its TTL window.",
+};
+
+export function AnalyticsTab({ model, refreshTick = 0 }: Props) {
   const [window,    setWindow]    = useState<TimeWindow>("24h");
   const [hitData,   setHitData]   = useState<HitRateBucket[]>([]);
   const [costData,  setCostData]  = useState<CostSavedPoint[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointRow[]>([]);
-  const [loading,   setLoading]   = useState(false);
+  const [tierData,  setTierData]  = useState<TierBreakdownRow[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [loaded,    setLoaded]    = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const hours = WINDOW_HOURS[window];
     const bucket = hours <= 6 ? 5 : hours <= 24 ? 30 : hours <= 168 ? 360 : 1440;
-    const [h, c, e] = await Promise.all([
-      fetchHitRate(model, hours, bucket),
-      fetchCostSaved(model, hours),
-      fetchEndpoints(model, hours),
-    ]);
-    setHitData(h);
-    setCostData(c);
-    setEndpoints(e);
-    setLoading(false);
+    try {
+      const [h, c, e, t] = await Promise.all([
+        fetchHitRate(model, hours, bucket),
+        fetchCostSaved(model, hours),
+        fetchEndpoints(model, hours),
+        fetchTierBreakdown(model, hours),
+      ]);
+      setHitData(h);
+      setCostData(c);
+      setEndpoints(e);
+      setTierData(t);
+      setLoaded(true);
+    } finally {
+      setLoading(false);
+    }
   }, [model, window]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshTick]);
 
+  const tierTotalCost = tierData.reduce((acc, t) => acc + (t.cost_saved ?? 0), 0);
   const totalSaved = costData.length > 0
     ? (costData[costData.length - 1].cumulative_saved ?? 0)
-    : 0;
+    : tierTotalCost;
 
   const exportCsv = useCallback(() => {
     if (!endpoints.length) return;
@@ -67,62 +87,70 @@ export function AnalyticsTab({ model }: Props) {
     a.click();
   }, [endpoints, model, window]);
 
+  const totalHits = tierData.reduce((acc, t) => acc + (t.hit_count ?? 0), 0);
+  const totalTokens = tierData.reduce((acc, t) => acc + (t.tokens_saved ?? 0), 0);
+
   return (
-    <div className="flex flex-col gap-8 p-1">
+    <div className="analytics-page flex flex-col gap-[18px]">
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-t-3 inline-flex items-center gap-1">
-            Window:
-            <InfoTip content={TIPS.analyticsWindow} placement="bottom" />
-          </span>
+      <div className="analytics-toolbar">
+        <div className="flex items-center gap-3">
+          <span className="pc-mono analytics-window-label">WINDOW</span>
           <div className="flex gap-1">
             {WINDOWS.map(w => (
               <button
                 key={w}
                 type="button"
                 onClick={() => setWindow(w)}
-                className={`filter-chip ${window === w ? "filter-chip-active" : ""}`}
+                className={`window-pill ${window === w ? "is-active" : ""}`}
               >
                 {w}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex gap-2">
-          <button type="button" className="btn btn-outline btn-sm" onClick={load} disabled={loading}>
+        <div className="flex gap-2 items-center">
+          <span className="pc-mono text-xs text-t-3">Model: {model}</span>
+          <button type="button" className="toolbar-btn" onClick={load} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </button>
-          <button type="button" className="btn btn-outline btn-sm" onClick={exportCsv}>
+          <button type="button" className="toolbar-btn" onClick={exportCsv}>
             Export CSV
           </button>
         </div>
       </div>
 
       {/* Hero: cumulative cost saved */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card analytics-hero">
+        <div className="analytics-hero-top">
           <div>
-            <div className="card-title">
-              <TitleWithTip tip={TIPS.costSavedChart} placement="bottom">
-                Cumulative cost saved
-              </TitleWithTip>
+            <p className="pc-mono analytics-hero-label">CUMULATIVE COST SAVED</p>
+            <div className="pc-mono analytics-hero-value">
+              {loading && !loaded ? "—" : fmtCost(totalSaved)}
             </div>
-            <div className="card-subtitle">
-              Total: <strong>{fmtCost(totalSaved)}</strong> over last {window}
+            <p className="analytics-hero-sub">
+              over last {window} · {loading && !loaded ? "…" : `${totalHits} cache hits`}
+            </p>
+          </div>
+          <div className="analytics-hero-tokens">
+            <div className="analytics-hero-tokens-val pc-mono">
+              {loading && !loaded ? "—" : totalTokens.toLocaleString()} tokens
             </div>
+            <div className="analytics-hero-tokens-sub">never sent to the API</div>
           </div>
         </div>
-        <div className="card-body" style={{ height: 220 }}>
-          {costData.length === 0 ? (
+        <div className="card-body analytics-hero-chart" style={{ height: 150 }}>
+          {loading && !loaded ? (
+            <EmptyState label="Loading analytics…" />
+          ) : costData.length === 0 ? (
             <EmptyState label="Run a test suite to see cost savings" />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={costData}>
                 <defs>
                   <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="var(--accent-green)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--green)" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="var(--green)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -143,7 +171,7 @@ export function AnalyticsTab({ model }: Props) {
                 <Area
                   type="monotone"
                   dataKey="cumulative_saved"
-                  stroke="var(--accent-green)"
+                  stroke="var(--green)"
                   fill="url(#costGrad)"
                   strokeWidth={2}
                   dot={false}
@@ -154,16 +182,72 @@ export function AnalyticsTab({ model }: Props) {
         </div>
       </div>
 
+      {/* Savings by tier */}
+      <div className="ge-card rounded-mock overflow-hidden">
+        <div className="card-header !border-b-0">
+          <div className="card-title">Savings by tier</div>
+          <div className="card-subtitle">Tokens & cost saved per caching layer</div>
+        </div>
+        <div className="card-body p-0">
+          {tierData.length === 0 ? (
+            <EmptyState label="Run a test suite to see tier savings" />
+          ) : (
+            <>
+              <div className="tier-grid-header">
+                <span>TIER</span>
+                <span>HITS</span>
+                <span>TOKENS SAVED</span>
+                <span className="text-right">COST SAVED</span>
+              </div>
+              {tierData.map((row) => {
+                const active = (row.hit_count ?? 0) > 0;
+                return (
+                  <div key={row.tier} className="tier-grid-row">
+                    <div>
+                      <div className="tier-grid-name">{row.label}</div>
+                      <div className="tier-grid-note">{TIER_NOTES[row.tier] ?? ""}</div>
+                    </div>
+                    <span className={clsx("cell-mono text-sm", active ? "text-t-1" : "text-t-3")}>
+                      {row.hit_count ?? 0}
+                    </span>
+                    <span className={clsx("cell-mono text-sm", active ? "data-cell-purple" : "text-t-3")}>
+                      {(row.tokens_saved ?? 0).toLocaleString()}
+                    </span>
+                    <span className={clsx("cell-mono text-sm cell-cost", active ? "data-cell-green" : "text-t-3")}>
+                      {fmtCost(row.cost_saved ?? 0)}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Hit rate over time */}
-      <div className="ge-card">
-        <div className="card-header">
+      <div className="ge-card rounded-mock">
+        <div className="card-header !border-b-0">
           <div className="card-title">
             <TitleWithTip tip={TIPS.hitRateChart} placement="bottom">
               Hit rate over time
             </TitleWithTip>
           </div>
+          <div className="chart-legend">
+            <span className="chart-legend-item">
+              <span className="chart-legend-swatch" style={{ background: "var(--green)" }} />
+              Exact
+            </span>
+            <span className="chart-legend-item">
+              <span className="chart-legend-swatch" style={{ background: "var(--amber)" }} />
+              Semantic
+            </span>
+            <span className="chart-legend-item">
+              <span className="chart-legend-swatch" style={{ background: "#2a3140" }} />
+              Miss
+            </span>
+          </div>
         </div>
-        <div className="card-body" style={{ height: 200 }}>
+        <div className="card-body pt-0" style={{ height: 220 }}>
           {hitData.length === 0 ? (
             <EmptyState label="No data for this window" />
           ) : (
@@ -177,9 +261,9 @@ export function AnalyticsTab({ model }: Props) {
                 />
                 <YAxis tick={{ fontSize: 10, fill: "var(--text-3)" }} />
                 <Tooltip labelFormatter={l => formatTs(Number(l))} />
-                <Area type="monotone" dataKey="exact_hits"    stackId="1" stroke="var(--accent-green)"  fill="var(--accent-green)"  fillOpacity={0.6} dot={false} name="Exact" />
-                <Area type="monotone" dataKey="semantic_hits" stackId="1" stroke="var(--accent-teal)"   fill="var(--accent-teal)"   fillOpacity={0.6} dot={false} name="Semantic" />
-                <Area type="monotone" dataKey="misses"        stackId="1" stroke="var(--accent-red)"    fill="var(--accent-red)"    fillOpacity={0.3} dot={false} name="Miss" />
+                <Area type="monotone" dataKey="exact_hits"    stackId="1" stroke="var(--green)"  fill="var(--green)"  fillOpacity={0.85} dot={false} name="Exact" />
+                <Area type="monotone" dataKey="semantic_hits" stackId="1" stroke="var(--amber)"  fill="var(--amber)"  fillOpacity={0.78} dot={false} name="Semantic" />
+                <Area type="monotone" dataKey="misses"        stackId="1" stroke="#222936"      fill="#222936"      fillOpacity={1}    dot={false} name="Miss" />
               </AreaChart>
             </ResponsiveContainer>
           )}

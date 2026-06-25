@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { deleteRun, fetchRunDetail, fetchRuns, fmtCost } from "@/lib/api";
+import { deleteRun, fetchRunDetail, fetchRuns } from "@/lib/api";
 import type { RunDetail, RunRecord } from "@/types";
 import clsx from "clsx";
 import { InfoTip } from "@/components/InfoTip";
@@ -24,14 +24,6 @@ function HitBadge({ rate }: { rate: number }) {
       {pct}%
     </span>
   );
-}
-
-function fmtRunDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString([], {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
 }
 
 export function RunHistory({
@@ -116,10 +108,7 @@ export function RunHistory({
             >
               <div className="ri-meta">
                 <div className="ri-id">{run.id.slice(0, 8)}</div>
-                <div className="ri-name">{run.suite_name}</div>
-                <div className="ri-info">
-                  {run.model} · {fmtCost(run.total_cost_usd)} · {fmtRunDate(run.created_at)}
-                </div>
+                <div className="ri-name">{run.suite_name} · {run.model}</div>
               </div>
               <HitBadge rate={run.hit_rate} />
             </button>

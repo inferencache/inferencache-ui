@@ -15,7 +15,7 @@ export function SidebarBrand({ live = true }: Props) {
         </svg>
       </div>
       <span className="sidebar-logo-name">
-        promptcache <span>/ dashboard</span>
+        inferencache
       </span>
       {live && (
         <div className="sidebar-live-chip">
