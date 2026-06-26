@@ -6,12 +6,13 @@ import {
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  fetchSimilarityDist, fetchFalsePositives, flagCallFalsePositive, fmtCost,
+  fetchSimilarityDist, fetchFalsePositives, fetchStaleMissRate,
+  flagCallFalsePositive, fmtCost,
 } from "@/lib/api";
 import { TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
 import { analyzeSystemPrompt } from "@/lib/prefixPatterns";
-import type { FalsePositiveRow, SimilarityBucket } from "@/types";
+import type { FalsePositiveRow, SimilarityBucket, StaleMissRate } from "@/types";
 
 const DEFAULT_SYSTEM_PROMPT =
   "You are a helpful assistant. Answer concisely and accurately.";
@@ -32,6 +33,7 @@ interface Props {
 export function TuningTab({ model, threshold, onThresholdChange }: Props) {
   const [dist,       setDist]       = useState<SimilarityBucket[]>([]);
   const [fps,        setFps]        = useState<FalsePositiveRow[]>([]);
+  const [staleMiss,  setStaleMiss]  = useState<StaleMissRate | null>(null);
   const [simThresh,  setSimThresh]  = useState(threshold);
   const [loading,    setLoading]    = useState(false);
   const [unflagging, setUnflagging] = useState<number | null>(null);
@@ -41,12 +43,14 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [d, f] = await Promise.all([
+    const [d, f, s] = await Promise.all([
       fetchSimilarityDist(model, 24, 20),
       fetchFalsePositives(model, 50),
+      fetchStaleMissRate(model, 24),
     ]);
     setDist(d);
     setFps(f);
+    setStaleMiss(s);
     setLoading(false);
   }, [model]);
 
@@ -74,6 +78,59 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Stale miss rate */}
+      <div className="ge-card tuning-card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">
+              <TitleWithTip
+                tip="Hits rejected because a cached entry expired or belonged to a different session. A high rate means TIME_WINDOWED or EPHEMERAL TTLs may be expiring too aggressively."
+                placement="bottom"
+              >
+                Stale miss rate
+              </TitleWithTip>
+            </div>
+            <div className="card-subtitle">
+              Expired or session-mismatched hits in the last 24h
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-run-suite btn-run-suite-sm"
+            onClick={load}
+            disabled={loading}
+          >
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+        <div className="card-body">
+          {staleMiss == null ? (
+            <p className="text-sm text-t-3">No miss data yet — run a test suite first</p>
+          ) : (
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide pc-mono">Rate</div>
+                <div className="text-2xl font-semibold data-cell-yellow pc-mono">
+                  {(staleMiss.stale_miss_rate * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide pc-mono">Stale</div>
+                <div className="text-xl font-medium pc-mono">{staleMiss.stale_misses}</div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide pc-mono">Regular misses</div>
+                <div className="text-xl font-medium pc-mono">{staleMiss.regular_misses}</div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide pc-mono">Total misses</div>
+                <div className="text-xl font-medium pc-mono">{staleMiss.total_misses}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Threshold slider */}
       <div className="ge-card tuning-card">
         <div className="card-header">

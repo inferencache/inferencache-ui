@@ -13,6 +13,7 @@ import type {
   RunEvent,
   RunRecord,
   SimilarityBucket,
+  StaleMissRate,
   TierBreakdownRow,
   ThresholdRecommendation,
   TimeWindow,
@@ -286,6 +287,23 @@ export async function fetchSimilarityDist(
     "similarity-dist",
     `model=${encodeURIComponent(model)}&window_hours=${windowHours}&buckets=${buckets}`,
   );
+}
+
+export async function fetchStaleMissRate(
+  model: string,
+  windowHours = 24,
+): Promise<StaleMissRate | null> {
+  for (const prefix of ["cache-stats", "analytics"]) {
+    try {
+      const res = await fetch(
+        `${BASE}/${prefix}/stale-miss-rate?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+      );
+      if (res.ok) return (await res.json()).data ?? null;
+    } catch {
+      /* try fallback prefix */
+    }
+  }
+  return null;
 }
 
 export async function fetchAlerts(model: string): Promise<AlertState | null> {
