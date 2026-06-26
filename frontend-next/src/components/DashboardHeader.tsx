@@ -203,6 +203,7 @@ export const DashboardHeader = memo(function DashboardHeader({
         <MetricCell label="Hit rate" value={hitPct} sub={`${stats.hits} hits · ${stats.misses} misses`} tone={hasRunData ? "green" : undefined} />
         <MetricCell label="Exact hits" value={hasRunData ? String(stats.exact) : "0"} sub="SHA-256 match" tone={stats.exact > 0 ? "green" : undefined} />
         <MetricCell label="Semantic hits" value={hasRunData ? String(stats.semantic) : "0"} sub="embedding match" tone={stats.semantic > 0 ? "amber" : undefined} />
+        <MetricCell label="Generative hits" value={hasRunData ? String(stats.generative) : "0"} sub="adapted reuse" tone={stats.generative > 0 ? "amber" : undefined} />
         <MetricCell label="Tokens saved" value={hasRunData ? stats.tokens_saved.toLocaleString() : "0"} sub="via cache" tone={stats.tokens_saved > 0 ? "purple" : undefined} />
         <MetricCell label="Cost saved" value={stats.cost_saved > 0 ? fmtCost(stats.cost_saved) : "—"} sub="vs all-API" tone={stats.cost_saved > 0 ? "green" : undefined} />
       </div>

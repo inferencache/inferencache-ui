@@ -9,18 +9,28 @@ import type { HitType, RunCallRecord, RunDetail, RunRecord } from "@/types";
 type CallFilter = "all" | HitType;
 
 function HitBadge({ type }: { type: HitType }) {
-  const label = type === "exact" ? "Exact hit" : type === "semantic" ? "Semantic hit" : "Cache miss";
+  const label =
+    type === "exact" ? "Exact hit" :
+    type === "semantic" ? "Semantic hit" :
+    type === "generative" ? "Generative hit" :
+    type === "stale_miss" ? "Stale miss" :
+    "Cache miss";
   return (
     <span
       className={clsx(
         "inline-flex px-1.5 py-0.5 rounded text-2xs font-bold uppercase tracking-wider",
-        type === "exact"    && "bg-hit-exact/15 text-hit-exact",
-        type === "semantic" && "bg-hit-semantic/15 text-hit-semantic",
-        type === "miss"     && "bg-miss/10 text-miss",
+        type === "exact"      && "bg-hit-exact/15 text-hit-exact",
+        type === "semantic"   && "bg-hit-semantic/15 text-hit-semantic",
+        type === "generative" && "bg-amber-500/15 text-amber-400",
+        type === "miss"       && "bg-miss/10 text-miss",
+        type === "stale_miss" && "bg-miss/10 text-miss",
       )}
       aria-label={label}
     >
-      {type === "exact" ? "EXACT" : type === "semantic" ? "SEM" : "MISS"}
+      {type === "exact" ? "EXACT" :
+        type === "semantic" ? "SEM" :
+        type === "generative" ? "GEN" :
+        type === "stale_miss" ? "STALE" : "MISS"}
     </span>
   );
 }
@@ -274,6 +284,9 @@ export function DbBrowser() {
                   <MetaCell label="Hit rate" value={`${Math.round(detail.hit_rate * 100)}%`} />
                   <MetaCell label="Exact hits" value={String(detail.exact_hits)} />
                   <MetaCell label="Semantic hits" value={String(detail.semantic_hits)} />
+                  {detail.generative_hits != null && detail.generative_hits > 0 && (
+                    <MetaCell label="Generative hits" value={String(detail.generative_hits)} />
+                  )}
                   <MetaCell label="Tokens" value={detail.total_tokens.toLocaleString()} />
                   <MetaCell label="Cost" value={fmtCost(detail.total_cost_usd)} />
                   <MetaCell label="Duration" value={`${(detail.total_time_ms / 1000).toFixed(1)}s`} />

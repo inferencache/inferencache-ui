@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Bar, BarChart, CartesianGrid, Cell,
+  Bar, BarChart, CartesianGrid,
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
@@ -68,10 +68,14 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
   }
 
   // Compute counterfactual hit rate at simThresh
-  const totalSemantic = dist.reduce((acc, b) => acc + b.count, 0);
+  const totalSemantic = dist.reduce(
+    (acc, b) => acc + (b.semantic_count ?? b.count ?? 0),
+    0,
+  );
+  const totalGenerative = dist.reduce((acc, b) => acc + (b.generative_count ?? 0), 0);
   const hitsAtThresh  = dist
     .filter(b => b.bucket_floor >= simThresh)
-    .reduce((acc, b) => acc + b.count, 0);
+    .reduce((acc, b) => acc + (b.semantic_count ?? b.count ?? 0), 0);
   const simHitRate = totalSemantic > 0
     ? ((hitsAtThresh / totalSemantic) * 100).toFixed(1)
     : "—";
@@ -183,6 +187,13 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
               At threshold {simThresh.toFixed(2)}: estimated{" "}
               <strong className="data-cell-teal">{simHitRate}%</strong> of semantic
               candidates would pass ({hitsAtThresh}/{totalSemantic} in last 24h).
+              {totalGenerative > 0 && (
+                <>
+                  {" "}
+                  <strong className="data-cell-yellow">{totalGenerative}</strong> generative
+                  hits in the zone below threshold.
+                </>
+              )}
             </p>
           )}
         </div>
@@ -259,7 +270,11 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dist}>
+              <BarChart data={dist.map(b => ({
+                ...b,
+                semantic_count: b.semantic_count ?? b.count ?? 0,
+                generative_count: b.generative_count ?? 0,
+              }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="bucket_floor"
@@ -268,7 +283,10 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                 />
                 <YAxis tick={{ fontSize: 10, fill: "var(--text-3)" }} />
                 <Tooltip
-                  formatter={(v: number | string) => [Number(v) || 0, "Hits"]}
+                  formatter={(v: number | string, name: string) => [
+                    Number(v) || 0,
+                    name === "generative_count" ? "Generative" : "Semantic",
+                  ]}
                   labelFormatter={(l: number | string) => `Similarity ≥ ${Number(l).toFixed(2)}`}
                 />
                 <ReferenceLine
@@ -277,14 +295,8 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
                   strokeDasharray="4 2"
                   label={{ value: "threshold", fontSize: 10, fill: "var(--accent-yellow)" }}
                 />
-                {dist.map(b => (
-                  <Bar key={b.bucket_floor} dataKey="count">
-                    <Cell
-                      key={`cell-${b.bucket_floor}`}
-                      fill="#f97316"
-                    />
-                  </Bar>
-                ))}
+                <Bar dataKey="semantic_count" stackId="hits" fill="#14b8a6" name="Semantic" />
+                <Bar dataKey="generative_count" stackId="hits" fill="#f59e0b" name="Generative" />
               </BarChart>
             </ResponsiveContainer>
           )}

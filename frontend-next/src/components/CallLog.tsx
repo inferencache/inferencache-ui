@@ -32,10 +32,11 @@ type LogRow =
   | { kind: "call";  ev: RunEvent }
   | { kind: "error"; ev: RunEvent };
 
-function ResultBadge({ type }: { type: "exact" | "semantic" | "miss" | "stale_miss" }) {
+function ResultBadge({ type }: { type: "exact" | "semantic" | "generative" | "miss" | "stale_miss" }) {
   const [cls, lbl] =
     type === "exact" ? ["b-e", "EXACT"] :
     type === "semantic" ? ["b-s", "SEM"] :
+    type === "generative" ? ["b-g", "GEN"] :
     type === "stale_miss" ? ["b-st", "STALE"] :
     ["b-m", "MISS"];
   return <span className={clsx("badge", cls)}>{lbl}</span>;
@@ -98,6 +99,7 @@ export const CallLog = memo(function CallLog({
     all:      rows.length,
     exact:    calls.filter(e => e.hit_type === "exact").length,
     semantic: calls.filter(e => e.hit_type === "semantic").length,
+    generative: calls.filter(e => e.hit_type === "generative").length,
     miss:     calls.filter(e =>
       e.hit_type === "miss" || e.hit_type === "stale_miss" || !e.hit
     ).length,

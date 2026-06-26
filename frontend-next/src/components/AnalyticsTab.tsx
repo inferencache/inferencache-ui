@@ -261,9 +261,10 @@ export function AnalyticsTab({ model, refreshTick = 0 }: Props) {
                 />
                 <YAxis tick={{ fontSize: 10, fill: "var(--text-3)" }} />
                 <Tooltip labelFormatter={l => formatTs(Number(l))} />
-                <Area type="monotone" dataKey="exact_hits"    stackId="1" stroke="var(--green)"  fill="var(--green)"  fillOpacity={0.85} dot={false} name="Exact" />
-                <Area type="monotone" dataKey="semantic_hits" stackId="1" stroke="var(--amber)"  fill="var(--amber)"  fillOpacity={0.78} dot={false} name="Semantic" />
-                <Area type="monotone" dataKey="misses"        stackId="1" stroke="#222936"      fill="#222936"      fillOpacity={1}    dot={false} name="Miss" />
+                <Area type="monotone" dataKey="exact_hits"       stackId="1" stroke="var(--green)"  fill="var(--green)"  fillOpacity={0.85} dot={false} name="Exact" />
+                <Area type="monotone" dataKey="semantic_hits"    stackId="1" stroke="var(--amber)"  fill="var(--amber)"  fillOpacity={0.78} dot={false} name="Semantic" />
+                <Area type="monotone" dataKey="generative_hits"  stackId="1" stroke="#f59e0b"      fill="#f59e0b"      fillOpacity={0.72} dot={false} name="Generative" />
+                <Area type="monotone" dataKey="misses"           stackId="1" stroke="#222936"      fill="#222936"      fillOpacity={1}    dot={false} name="Miss" />
               </AreaChart>
             </ResponsiveContainer>
           )}

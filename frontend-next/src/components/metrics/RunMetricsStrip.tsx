@@ -46,6 +46,13 @@ export const RunMetricsStrip = memo(function RunMetricsStrip({ stats }: Props) {
         tip={TIPS.semanticHits}
       />
       <MetricCell
+        label="Generative hits"
+        value={hasRunData ? String(stats.generative) : "0"}
+        sub="adapted reuse"
+        tone={stats.generative > 0 ? "amber" : undefined}
+        tip="Cheap model adapted a similar cached response."
+      />
+      <MetricCell
         label="Tokens saved"
         value={hasRunData ? stats.tokens_saved.toLocaleString() : "0"}
         sub="via cache"

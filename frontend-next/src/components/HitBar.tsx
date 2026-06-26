@@ -8,9 +8,10 @@ import type { LiveStats } from "@/types";
 interface Props { stats: LiveStats; }
 
 export const HitBar = memo(function HitBar({ stats }: Props) {
-  const { total, exact, semantic, misses, hits } = stats;
+  const { total, exact, semantic, generative, misses, hits } = stats;
   const exactPct = total > 0 ? (exact / total) * 100 : 0;
   const semPct   = total > 0 ? (semantic / total) * 100 : 0;
+  const genPct   = total > 0 ? (generative / total) * 100 : 0;
   const missPct  = total > 0 ? (misses / total) * 100 : 100;
   const hitPct   = total > 0 ? Math.round((hits / total) * 100) : 0;
 
@@ -38,6 +39,11 @@ export const HitBar = memo(function HitBar({ stats }: Props) {
             <InfoTip content={TIPS.semanticLegend} placement="bottom" />
           </div>
           <div className="leg-i">
+            <div className="leg-d" style={{ background: "#f59e0b" }} />
+            Generative
+            <InfoTip content="Adapted from a similar cached response via a cheap model." placement="bottom" />
+          </div>
+          <div className="leg-i">
             <div className="leg-d" style={{ background: "var(--b2)" }} />
             Miss
             <InfoTip content={TIPS.missLegend} placement="bottom" />
@@ -52,6 +58,7 @@ export const HitBar = memo(function HitBar({ stats }: Props) {
           <>
             {exactPct > 0 && <div className="bseg bs-exact" style={{ width: `${exactPct}%` }} />}
             {semPct > 0 && <div className="bseg bs-sem" style={{ width: `${semPct}%` }} />}
+            {genPct > 0 && <div className="bseg" style={{ width: `${genPct}%`, background: "#f59e0b" }} />}
             {missPct > 0 && <div className="bseg bs-miss" style={{ width: `${missPct}%` }} />}
           </>
         )}
@@ -61,7 +68,7 @@ export const HitBar = memo(function HitBar({ stats }: Props) {
         <span>
           {total === 0
             ? "Run a suite to see breakdown"
-            : `${exact} exact · ${semantic} semantic · ${misses} miss`}
+            : `${exact} exact · ${semantic} semantic · ${generative} generative · ${misses} miss`}
         </span>
         <span>{total > 0 ? `${hitPct}% hit rate` : ""}</span>
       </div>

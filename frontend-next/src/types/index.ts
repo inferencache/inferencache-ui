@@ -2,7 +2,7 @@
 
 export type Provider = "openai" | "anthropic";
 
-export type HitType = "exact" | "semantic" | "miss" | "stale_miss";
+export type HitType = "exact" | "semantic" | "generative" | "miss" | "stale_miss";
 
 export type CacheMode = "cold" | "warm";
 
@@ -49,6 +49,10 @@ export interface RunEvent {
   endpoint?:       string;
   session_id?:     string;
   matched_prompt?: string;
+  adaptation_model?: string;
+  adaptation_tokens_in?: number | null;
+  adaptation_tokens_out?: number | null;
+  adaptation_cost_usd?: number | null;
   // start fields
   suite?:          string;
   threshold?:      number;
@@ -58,6 +62,7 @@ export interface RunEvent {
   cache_hits?:     number;
   exact_hits?:     number;
   semantic_hits?:  number;
+  generative_hits?: number;
   total_tokens?:   number;
   total_cost_usd?: number;
   total_time_ms?:  number;
@@ -78,6 +83,7 @@ export interface HitRateBucket {
   time_bucket:   number;
   exact_hits:    number;
   semantic_hits: number;
+  generative_hits?: number;
   misses:        number;
   total_calls:   number;
 }
@@ -107,8 +113,10 @@ export interface TierBreakdownRow {
 }
 
 export interface SimilarityBucket {
-  bucket_floor: number;
-  count:        number;
+  bucket_floor:     number;
+  count:            number;
+  semantic_count?:  number;
+  generative_count?: number;
 }
 
 export interface StaleMissRate {
@@ -145,6 +153,7 @@ export interface LiveStats {
   hits:         number;
   exact:        number;
   semantic:     number;
+  generative:   number;
   misses:       number;
   tokens_saved: number;
   cost_saved:   number;
@@ -175,6 +184,7 @@ export interface RunRecord {
   cache_hits:    number;
   exact_hits:    number;
   semantic_hits: number;
+  generative_hits?: number;
   total_tokens:  number;
   total_cost_usd: number;
   total_time_ms:  number;

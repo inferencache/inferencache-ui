@@ -69,6 +69,8 @@ export function CallDrawer({ call, onClose }: Props) {
 
   const hitType  = call.hit_type ?? "miss";
   const isSemantic = hitType === "semantic";
+  const isGenerative = hitType === "generative";
+  const isAdaptedHit = isSemantic || isGenerative;
 
   async function toggleFlag() {
     if (!call?.call_id || !isSemantic) return;
@@ -107,13 +109,14 @@ export function CallDrawer({ call, onClose }: Props) {
               `grade-badge-${hitType}`,
             )}>
               <span>
-                {hitType === "exact" ? "EXACT" : hitType === "semantic" ? "SEMANTIC" : "MISS"}
+                {hitType === "exact" ? "EXACT" :
+                  hitType === "semantic" ? "SEMANTIC" :
+                  hitType === "generative" ? "GENERATIVE" : "MISS"}
               </span>
             </span>
           </Row>
 
-          {/* Similarity */}
-          {hitType === "semantic" && (
+          {(isSemantic || isGenerative) && (
             <Row label="Similarity">
               <span className="cell-mono data-cell-teal">
                 {(call.similarity ?? 0).toFixed(4)}
@@ -121,8 +124,25 @@ export function CallDrawer({ call, onClose }: Props) {
             </Row>
           )}
 
-          {/* Matched cached prompt (semantic hits only) */}
-          {isSemantic && call.matched_prompt && (
+          {isGenerative && (
+            <>
+              <Row label="Adaptation model">
+                <span className="cell-mono text-xs">
+                  {call.adaptation_model ?? "—"}
+                </span>
+              </Row>
+              <Row label="Adaptation tokens">
+                <span className="cell-mono text-xs">
+                  {call.adaptation_tokens_in == null && call.adaptation_tokens_out == null
+                    ? "—"
+                    : `${call.adaptation_tokens_in ?? 0} in / ${call.adaptation_tokens_out ?? 0} out`}
+                </span>
+              </Row>
+            </>
+          )}
+
+          {/* Matched cached prompt (semantic / generative hits) */}
+          {isAdaptedHit && call.matched_prompt && (
             <div className="call-drawer-section">
               <div className="call-drawer-section-label">Matched prompt</div>
               <pre className="call-drawer-pre">{call.matched_prompt}</pre>
