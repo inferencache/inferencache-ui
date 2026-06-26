@@ -32,10 +32,11 @@ type LogRow =
   | { kind: "call";  ev: RunEvent }
   | { kind: "error"; ev: RunEvent };
 
-function ResultBadge({ type }: { type: "exact" | "semantic" | "miss" }) {
+function ResultBadge({ type }: { type: "exact" | "semantic" | "miss" | "stale_miss" }) {
   const [cls, lbl] =
     type === "exact" ? ["b-e", "EXACT"] :
     type === "semantic" ? ["b-s", "SEM"] :
+    type === "stale_miss" ? ["b-st", "STALE"] :
     ["b-m", "MISS"];
   return <span className={clsx("badge", cls)}>{lbl}</span>;
 }
@@ -97,7 +98,9 @@ export const CallLog = memo(function CallLog({
     all:      rows.length,
     exact:    calls.filter(e => e.hit_type === "exact").length,
     semantic: calls.filter(e => e.hit_type === "semantic").length,
-    miss:     calls.filter(e => e.hit_type === "miss" || !e.hit).length,
+    miss:     calls.filter(e =>
+      e.hit_type === "miss" || e.hit_type === "stale_miss" || !e.hit
+    ).length,
     error:    errors.length,
   }), [rows.length, calls, errors.length]);
 
@@ -108,7 +111,7 @@ export const CallLog = memo(function CallLog({
       r.kind === "call" && (
         filter === "exact"    ? r.ev.hit_type === "exact" :
         filter === "semantic" ? r.ev.hit_type === "semantic" :
-        (r.ev.hit_type === "miss" || !r.ev.hit)
+        (r.ev.hit_type === "miss" || r.ev.hit_type === "stale_miss" || !r.ev.hit)
       )
     )
   ), [rows, filter]);

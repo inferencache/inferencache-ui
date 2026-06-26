@@ -2,7 +2,7 @@
 
 export type Provider = "openai" | "anthropic";
 
-export type HitType = "exact" | "semantic" | "miss";
+export type HitType = "exact" | "semantic" | "miss" | "stale_miss";
 
 export type CacheMode = "cold" | "warm";
 
@@ -97,6 +97,13 @@ export interface EndpointRow {
 export interface SimilarityBucket {
   bucket_floor: number;
   count:        number;
+}
+
+export interface StaleMissRate {
+  stale_misses:     number;
+  regular_misses:   number;
+  total_misses:     number;
+  stale_miss_rate:  number;
 }
 
 export type AlertStatus = "ok" | "warn" | "alert";

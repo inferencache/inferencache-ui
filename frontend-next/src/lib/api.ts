@@ -13,6 +13,7 @@ import type {
   RunEvent,
   RunRecord,
   SimilarityBucket,
+  StaleMissRate,
   ThresholdRecommendation,
   TimeWindow,
 } from "@/types";
@@ -266,6 +267,17 @@ export async function fetchSimilarityDist(
   );
   if (!res.ok) return [];
   return (await res.json()).data ?? [];
+}
+
+export async function fetchStaleMissRate(
+  model: string,
+  windowHours = 24,
+): Promise<StaleMissRate | null> {
+  const res = await fetch(
+    `${BASE}/analytics/stale-miss-rate?model=${encodeURIComponent(model)}&window_hours=${windowHours}`
+  );
+  if (!res.ok) return null;
+  return (await res.json()).data ?? null;
 }
 
 export async function fetchAlerts(model: string): Promise<AlertState | null> {

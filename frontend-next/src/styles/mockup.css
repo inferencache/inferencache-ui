@@ -1690,6 +1690,7 @@
 
 .app-shell .b-e { background: rgba(16, 217, 160, 0.1); color: var(--green); }
 .app-shell .b-s { background: rgba(245, 166, 35, 0.1); color: var(--amber); }
+.app-shell .b-st { background: rgba(255, 196, 46, 0.14); color: #d4a017; }
 .app-shell .b-m { background: rgba(240, 106, 106, 0.08); color: var(--red); }
 .app-shell .b-err { background: rgba(240, 106, 106, 0.15); color: var(--red); font-weight: 600; }
 

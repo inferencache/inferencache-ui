@@ -6,11 +6,11 @@ import {
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  fetchSimilarityDist, fetchFalsePositives, flagCallFalsePositive, fmtCost,
+  fetchSimilarityDist, fetchFalsePositives, fetchStaleMissRate, flagCallFalsePositive, fmtCost,
 } from "@/lib/api";
 import { TitleWithTip } from "@/components/InfoTip";
 import { TIPS } from "@/lib/tooltips";
-import type { FalsePositiveRow, SimilarityBucket } from "@/types";
+import type { FalsePositiveRow, SimilarityBucket, StaleMissRate } from "@/types";
 
 interface Props {
   model:     string;
@@ -21,18 +21,21 @@ interface Props {
 export function TuningTab({ model, threshold, onThresholdChange }: Props) {
   const [dist,       setDist]       = useState<SimilarityBucket[]>([]);
   const [fps,        setFps]        = useState<FalsePositiveRow[]>([]);
+  const [staleMiss,  setStaleMiss]  = useState<StaleMissRate | null>(null);
   const [simThresh,  setSimThresh]  = useState(threshold);
   const [loading,    setLoading]    = useState(false);
   const [unflagging, setUnflagging] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [d, f] = await Promise.all([
+    const [d, f, s] = await Promise.all([
       fetchSimilarityDist(model, 24, 20),
       fetchFalsePositives(model, 50),
+      fetchStaleMissRate(model, 24),
     ]);
     setDist(d);
     setFps(f);
+    setStaleMiss(s);
     setLoading(false);
   }, [model]);
 
@@ -60,6 +63,59 @@ export function TuningTab({ model, threshold, onThresholdChange }: Props) {
 
   return (
     <div className="flex flex-col gap-8 p-1">
+      {/* Stale miss rate */}
+      <div className="ge-card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">
+              <TitleWithTip
+                tip="Hits rejected because a cached entry expired or belonged to a different session. A high rate means TIME_WINDOWED or EPHEMERAL TTLs may be too aggressive."
+                placement="bottom"
+              >
+                Stale miss rate
+              </TitleWithTip>
+            </div>
+            <div className="card-subtitle">
+              Expired or session-mismatched cache hits in the last 24h
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={load}
+            disabled={loading}
+          >
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+        <div className="card-body">
+          {staleMiss == null ? (
+            <p className="text-sm text-t-3">No miss data yet — run a test suite</p>
+          ) : (
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide">Stale miss rate</div>
+                <div className="text-2xl font-semibold data-cell-yellow">
+                  {(staleMiss.stale_miss_rate * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide">Stale misses</div>
+                <div className="text-xl font-medium">{staleMiss.stale_misses}</div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide">Regular misses</div>
+                <div className="text-xl font-medium">{staleMiss.regular_misses}</div>
+              </div>
+              <div>
+                <div className="text-t-3 text-xs uppercase tracking-wide">Total misses</div>
+                <div className="text-xl font-medium">{staleMiss.total_misses}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Threshold slider */}
       <div className="ge-card">
         <div className="card-header">

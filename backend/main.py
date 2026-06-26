@@ -32,12 +32,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-# ── promptcache imports ───────────────────────────────────────────────────────
+# ── inferencache imports ──────────────────────────────────────────────────────
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "promptcache" / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "inferencache" / "src"))
 
-from promptcache.engine import CacheConfig, CacheEngine
-from promptcache.analytics import CacheAnalytics
+from inferencache.engine import CacheConfig, CacheEngine
+from inferencache.analytics import CacheAnalytics
 
 import db as _db
 import analyze as _analyze
@@ -979,6 +979,18 @@ async def analytics_similarity_dist(
         None, get_analytics().similarity_distribution, model, window_hours, buckets
     )
     return {"data": rows, "model": model, "window_hours": window_hours}
+
+
+@app.get("/analytics/stale-miss-rate")
+async def analytics_stale_miss_rate(
+    model: str = "gpt-4o-mini",
+    window_hours: int = 24,
+):
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None, get_analytics().stale_miss_rate, model, window_hours
+    )
+    return {"data": result, "model": model, "window_hours": window_hours}
 
 
 @app.get("/alerts/check")
