@@ -1,64 +1,75 @@
-import type { ReactNode } from "react";
+"use client";
 
-export type DashboardTab = "live" | "analytics" | "tuning";
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type NavbarPage = "dashboard" | "saved-runs";
+// ── Tab types ─────────────────────────────────────────────────────────────────
+
+export type DashboardTab = "overview" | "map" | "live" | "tuning" | "devtools";
+
+export type NavbarPage = "dashboard";
 
 export interface NavItemDef {
-  id:    DashboardTab | "saved-runs";
+  id:    DashboardTab;
   label: string;
+  icon?: React.ReactNode;
   href?: string;
-  icon:  ReactNode;
 }
 
 export const NAV_ITEMS: NavItemDef[] = [
-  {
-    id: "live",
-    label: "Cache testing",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-        <polygon points="5 3 19 12 5 21 5 3" />
-      </svg>
-    ),
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-        <rect x="2" y="2" width="20" height="8" rx="2" />
-        <rect x="2" y="14" width="20" height="8" rx="2" />
-      </svg>
-    ),
-  },
-  {
-    id: "tuning",
-    label: "Tuning",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M3 12h3m12 0h3M12 3v3m0 12v3" />
-      </svg>
-    ),
-  },
-  {
-    id: "saved-runs",
-    label: "Saved runs",
-    href: "/dashboard/db",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
-  },
+  { id: "overview", label: "Overview" },
+  { id: "map",      label: "Cache map" },
+  { id: "live",     label: "Live" },
+  { id: "tuning",   label: "Tuning" },
 ];
 
+export const DEV_NAV_ITEM: NavItemDef = { id: "devtools", label: "Dev tools" };
+
 export function tabHref(tab: DashboardTab): string {
-  return tab === "live" ? "/dashboard/" : `/dashboard/?tab=${tab}`;
+  if (tab === "overview") return "/dashboard/";
+  return `/dashboard/?tab=${tab}`;
 }
 
 export function parseDashboardTab(raw: string | null): DashboardTab {
-  if (raw === "analytics" || raw === "tuning" || raw === "live") return raw;
-  return "live";
+  if (raw === "map" || raw === "live" || raw === "tuning" || raw === "devtools") return raw;
+  return "overview";
+}
+
+// ── Dev mode context ──────────────────────────────────────────────────────────
+
+interface DevModeContextValue {
+  devMode: boolean;
+  toggleDevMode: () => void;
+}
+
+const DevModeContext = createContext<DevModeContextValue>({
+  devMode: false,
+  toggleDevMode: () => {},
+});
+
+export function DevModeProvider({ children }: { children: ReactNode }) {
+  const [devMode, setDevMode] = useState(false);
+
+  useEffect(() => {
+    try {
+      setDevMode(localStorage.getItem("devMode") === "true");
+    } catch {}
+  }, []);
+
+  function toggleDevMode() {
+    setDevMode((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("devMode", String(next)); } catch {}
+      return next;
+    });
+  }
+
+  return (
+    <DevModeContext.Provider value={{ devMode, toggleDevMode }}>
+      {children}
+    </DevModeContext.Provider>
+  );
+}
+
+export function useDevMode() {
+  return useContext(DevModeContext);
 }

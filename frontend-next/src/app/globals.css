@@ -6,31 +6,30 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --body-bg: #0c0e13;
-  --bg-surface: #13161e;
-  --bg-surface-secondary: #0c0e13;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-translucent: rgba(255, 255, 255, 0.06);
-  --text: #e9edf3;
-  --text-secondary: #cdd3dc;
-  --text-muted: #565d6b;
-  --text-3: #565d6b;
-  --t-1: #e9edf3;
-  --t-2: #8b929e;
-  --t-3: #565d6b;
-  --surface-2: #0c0e13;
-  --border: rgba(255, 255, 255, 0.06);
+  --body-bg: #0e0f11;
+  --bg-surface: #16181c;
+  --bg-surface-secondary: #1e2026;
+  --border-color: #2a2d35;
+  --border-translucent: #2a2d35;
+  --text: #e8eaf0;
+  --text-secondary: #e8eaf0;
+  --text-muted: #6b7280;
+  --text-3: #6b7280;
+  --t-1: #e8eaf0;
+  --t-2: #6b7280;
+  --t-3: #3d4148;
+  --surface-2: #1e2026;
 
-  --primary: #f97316;
-  --accent-green: #10d9a0;
-  --accent-teal: #10d9a0;
-  --accent-yellow: #f5a623;
-  --accent-red: #f06a6a;
-  --accent-orange: #f97316;
+  --primary: #f59e0b;
+  --accent-green: #22c55e;
+  --accent-teal: #22c55e;
+  --accent-yellow: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-orange: #f59e0b;
 
-  --hit-exact: #10d9a0;
-  --hit-semantic: #f5a623;
-  --miss: #f06a6a;
+  --hit-exact: #4ade80;
+  --hit-semantic: #fbbf24;
+  --miss: #ef4444;
 
   --font-mono: var(--font-geist-mono, 'Geist Mono', monospace);
 }

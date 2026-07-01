@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { AppNavbar } from "@/components/AppNavbar";
 import { deleteRun, fetchRunDetail, fetchRuns, fmtCost } from "@/lib/api";
 import type { HitType, RunCallRecord, RunDetail, RunRecord } from "@/types";
 
@@ -135,8 +134,6 @@ export function DbBrowser() {
 
   return (
     <>
-      <AppNavbar page="saved-runs" />
-
       {error && (
         <div role="alert" className="ge-alert ge-alert-error mx-4 mt-2 shrink-0">
           <span>{error}</span>

@@ -1,0 +1,722 @@
+/* Dashboard dark theme — overrides Tailwind/existing theme */
+:root {
+  --bg: #0e0f11;
+  --surface: #16181c;
+  --surface2: #1e2026;
+  --border: #2a2d35;
+  --text: #e8eaf0;
+  --muted: #6b7280;
+  --dim: #3d4148;
+
+  --green: #22c55e;
+  --green-dim: #0d2b18;
+  --green-border: #1a4a2a;
+  --green-text: #4ade80;
+
+  --amber: #f59e0b;
+  --amber-dim: #2a1f07;
+  --amber-border: #3a2a07;
+  --amber-text: #fbbf24;
+
+  --blue: #3b82f6;
+  --blue-dim: #0d1f3c;
+
+  --purple: #a78bfa;
+  --red: #ef4444;
+  --red-dim: #2a0f0f;
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.ds-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Navbar ─────────────────────────────────────────────────────────────── */
+
+.ds-nav {
+  height: 44px;
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 0;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.ds-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  margin-right: 4px;
+}
+
+.ds-nav-brand-name {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.ds-nav-version {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.ds-nav-tabs {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex: 1;
+  margin-left: 8px;
+}
+
+.ds-nav-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  height: 100%;
+  white-space: nowrap;
+  transition: color 0.12s ease, border-color 0.12s ease;
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+}
+
+.ds-nav-tab:hover {
+  color: var(--text);
+}
+
+.ds-nav-tab.is-active {
+  color: var(--text);
+  border-bottom-color: var(--green);
+}
+
+.ds-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.ds-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+
+.ds-live-dot.is-live {
+  background: var(--green);
+  animation: ds-pulse 2s ease infinite;
+}
+
+@keyframes ds-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ds-nav-host {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ds-dev-btn {
+  font-size: 11px;
+  color: var(--dim);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+  font-family: inherit;
+}
+
+.ds-dev-btn:hover {
+  color: var(--muted);
+  border-color: var(--dim);
+}
+
+.ds-dev-btn.is-active {
+  color: var(--amber-text);
+  border-color: var(--amber-border);
+  background: var(--amber-dim);
+}
+
+/* ── Tab body ────────────────────────────────────────────────────────────── */
+
+.ds-body {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.ds-tab-page {
+  padding: 20px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.ds-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.ds-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ds-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.ds-card-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Metric cards ────────────────────────────────────────────────────────── */
+
+.ds-metric-hero {
+  background: var(--green-dim);
+  border: 0.5px solid var(--green-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.ds-metric-hero-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #4ade80;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ds-metric-hero-value {
+  font-size: 38px;
+  font-weight: 600;
+  color: var(--green-text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ds-metric-hero-sub {
+  font-size: 11px;
+  color: #2d7a45;
+}
+
+.ds-metric-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ds-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.ds-metric-value {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ds-metric-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Bar rows ────────────────────────────────────────────────────────────── */
+
+.ds-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ds-bar-label {
+  width: 88px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.ds-bar-track {
+  flex: 1;
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ds-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.ds-bar-count {
+  width: 22px;
+  font-size: 11px;
+  color: var(--dim);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Live feed ───────────────────────────────────────────────────────────── */
+
+.ds-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.ds-feed-row:last-child {
+  border-bottom: none;
+}
+
+.ds-feed-badge {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ds-feed-badge-exact {
+  background: var(--green-dim);
+  color: var(--green-text);
+  border: 0.5px solid var(--green-border);
+}
+
+.ds-feed-badge-sem {
+  background: var(--amber-dim);
+  color: var(--amber-text);
+  border: 0.5px solid var(--amber-border);
+}
+
+.ds-feed-badge-miss {
+  background: var(--surface2);
+  color: var(--dim);
+  border: 0.5px solid var(--border);
+}
+
+.ds-feed-prompt {
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-feed-latency {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.ds-feed-latency.is-fast {
+  color: var(--green-text);
+}
+
+/* ── Filter pills ────────────────────────────────────────────────────────── */
+
+.ds-filter-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.ds-filter-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: transparent;
+  border: 0.5px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.1s;
+  font-family: inherit;
+}
+
+.ds-filter-pill:hover {
+  color: var(--text);
+  border-color: var(--dim);
+}
+
+.ds-filter-pill.is-active {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--dim);
+}
+
+/* ── Config rows ─────────────────────────────────────────────────────────── */
+
+.ds-config-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.ds-config-row:last-child {
+  border-bottom: none;
+}
+
+.ds-config-key {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ds-config-val {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--text);
+}
+
+/* ── Toggle switch ───────────────────────────────────────────────────────── */
+
+.ds-toggle {
+  width: 30px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--dim);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.ds-toggle.is-on {
+  background: #16632e;
+}
+
+.ds-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+
+.ds-toggle.is-on::after {
+  transform: translateX(14px);
+}
+
+/* ── Threshold pills ─────────────────────────────────────────────────────── */
+
+.ds-thresh-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ds-thresh-pill {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  color: var(--muted);
+}
+
+.ds-thresh-pill-num {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── Savings breakdown summary ───────────────────────────────────────────── */
+
+.ds-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.ds-summary-row.is-accent {
+  color: var(--green-text);
+  font-weight: 500;
+}
+
+.ds-summary-row.is-muted {
+  color: var(--muted);
+}
+
+.ds-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 10px 0;
+}
+
+/* ── Cache map ───────────────────────────────────────────────────────────── */
+
+.ds-map-canvas-wrap {
+  height: 160px;
+  background: var(--bg);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ds-map-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ds-map-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.ds-map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ds-map-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Full cache map ──────────────────────────────────────────────────────── */
+
+.ds-fullmap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px;
+  gap: 10px;
+}
+
+.ds-fullmap-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ds-fullmap-search {
+  flex: 1;
+  max-width: 280px;
+  height: 32px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 0 10px;
+  outline: none;
+  font-family: inherit;
+}
+
+.ds-fullmap-search:focus {
+  border-color: var(--dim);
+}
+
+.ds-fullmap-canvas-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ds-fullmap-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip */
+.ds-map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  max-width: 280px;
+  color: var(--text);
+  z-index: 10;
+  line-height: 1.5;
+}
+
+.ds-map-tooltip-badge {
+  display: inline-block;
+  margin-left: 6px;
+}
+
+/* Side panel */
+.ds-map-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--surface);
+  border-left: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  overflow-y: auto;
+}
+
+.ds-map-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.ds-map-panel-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ds-map-panel-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.ds-map-panel-body {
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ds-map-panel-prompt {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ds-map-panel-response {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.ds-map-panel-meta {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.ds-map-clear-btn {
+  margin-top: auto;
+  padding: 7px 12px;
+  font-size: 12px;
+  background: var(--red-dim);
+  border: 0.5px solid var(--border);
+  color: var(--red);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  font-family: inherit;
+}
+
+.ds-map-clear-btn:hover {
+  opacity: 0.8;
+}
+
+/* ── Live tab re-skin ────────────────────────────────────────────────────── */
+
+.ds-live-wrap {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Tuning tab re-skin ──────────────────────────────────────────────────── */
+/* Tuning uses existing .ge-card, .card-header, etc — just override tokens  */

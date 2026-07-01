@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { AppShellProvider } from "@/lib/appShell";
 import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
+import "../styles/dashboard-theme.css";
 import "../styles/tokens.css";
 import "../styles/app.css";
 import "../styles/dashboard-components.css";

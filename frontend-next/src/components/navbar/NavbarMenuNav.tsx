@@ -28,7 +28,6 @@ export const NavbarMenuNav = memo(function NavbarMenuNav({
   const close = useCallback(() => onNavigate?.(), [onNavigate]);
 
   function isActive(item: NavItemDef): boolean {
-    if (item.id === "saved-runs") return page === "saved-runs" || pathname.startsWith("/db");
     if (!onDashboard) return false;
     return item.id === activeTab;
   }

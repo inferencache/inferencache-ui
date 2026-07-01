@@ -1,90 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { memo } from "react";
 import clsx from "clsx";
-import { Logo } from "@/components/Logo";
 import {
   NAV_ITEMS,
+  DEV_NAV_ITEM,
   tabHref,
-  type DashboardTab,
-  type NavbarPage,
+  parseDashboardTab,
+  useDevMode,
 } from "@/lib/dashboardNav";
 import { useBackendPing } from "@/lib/useBackendPing";
 
-interface Props {
-  page?:        NavbarPage;
-  activeTab?:   DashboardTab;
-  onTabChange?: (tab: DashboardTab) => void;
-}
-
-export const AppNavbar = memo(function AppNavbar({
-  page = "dashboard",
-  activeTab = "live",
-  onTabChange,
-}: Props) {
-  const pathname = usePathname();
+export const AppNavbar = memo(function AppNavbar() {
+  const searchParams = useSearchParams();
+  const activeTab = parseDashboardTab(searchParams.get("tab"));
   const { ms, ok, host } = useBackendPing();
-  const onDashboard = page === "dashboard" || pathname.startsWith("/dashboard");
+  const { devMode, toggleDevMode } = useDevMode();
 
-  function isActive(id: string): boolean {
-    if (id === "saved-runs") return page === "saved-runs" || pathname.startsWith("/dashboard/db");
-    if (!onDashboard) return false;
-    return id === activeTab;
-  }
+  const tabs = devMode ? [...NAV_ITEMS, DEV_NAV_ITEM] : NAV_ITEMS;
 
   return (
-    <header className="app-navbar">
-      <div className="app-navbar-inner">
-        <Link href="/dashboard/" className="app-navbar-brand">
-          <Logo variant="app" size={22} />
-          <span className="app-navbar-brand-text pc-mono">inferencache</span>
-        </Link>
+    <nav className="ds-nav">
+      <Link href="/dashboard/" className="ds-nav-brand">
+        <span className="ds-nav-brand-name">inferencache</span>
+        <span className="ds-nav-version">v0.1</span>
+      </Link>
 
-        <nav className="app-navbar-tabs" aria-label="Dashboard">
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item.id);
-
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={clsx("app-nav-tab", active && "is-active")}
-                >
-                  <span className="app-nav-tab-icon">{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            }
-
-            const tab = item.id as DashboardTab;
-            const href = tabHref(tab);
-
-            return (
-              <Link
-                key={item.id}
-                href={href}
-                className={clsx("app-nav-tab", active && "is-active")}
-                aria-current={active ? "page" : undefined}
-              >
-                <span className="app-nav-tab-icon">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="app-navbar-status">
-          <span className={clsx("app-navbar-ping-dot", ok && "is-live")} />
-          <span className="app-navbar-ping-text pc-mono">
-            {host || "localhost"}{ms != null ? ` · ${ms}ms` : ""}
-          </span>
-        </div>
+      <div className="ds-nav-tabs" role="navigation" aria-label="Dashboard">
+        {tabs.map((item) => (
+          <Link
+            key={item.id}
+            href={tabHref(item.id)}
+            className={clsx("ds-nav-tab", activeTab === item.id && "is-active")}
+            aria-current={activeTab === item.id ? "page" : undefined}
+          >
+            {item.label}
+          </Link>
+        ))}
       </div>
-    </header>
+
+      <div className="ds-nav-right">
+        <span className={clsx("ds-live-dot", ok && "is-live")} aria-hidden />
+        <span className="ds-nav-host">
+          {host || "localhost:8080"}{ms != null ? ` · ${ms}ms` : ""}
+        </span>
+        <button
+          type="button"
+          className={clsx("ds-dev-btn", devMode && "is-active")}
+          onClick={toggleDevMode}
+          title={devMode ? "Hide Dev tools tab" : "Show Dev tools tab"}
+        >
+          {devMode ? "Dev mode: on" : "Dev mode"}
+        </button>
+      </div>
+    </nav>
   );
 });
-
-export type { DashboardTab };
