@@ -1,6 +1,6 @@
 # inferencache dashboard
 
-Live pressure-testing dashboard for [inferencache](https://github.com/lavondev/inferencache).
+Live pressure-testing dashboard for [inferencache](https://github.com/inferencache/inferencache).
 
 ## Dev setup
 

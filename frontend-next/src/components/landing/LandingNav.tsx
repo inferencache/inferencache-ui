@@ -1,7 +1,7 @@
 import { Logo } from "@/components/Logo";
 
-const GITHUB_URL = "https://github.com/lavondev";
-const GITHUB_REPO_URL = "https://github.com/lavondev/inferencache";
+const GITHUB_URL = "https://github.com/inferencache";
+const GITHUB_REPO_URL = "https://github.com/inferencache/inferencache";
 const X_URL = "https://twitter.com/justindev_";
 
 export function LandingNav() {
