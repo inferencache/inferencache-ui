@@ -12,6 +12,7 @@ import {
   useDevMode,
 } from "@/lib/dashboardNav";
 import { useBackendPing } from "@/lib/useBackendPing";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const AppNavbar = memo(function AppNavbar() {
   const searchParams = useSearchParams();
@@ -46,6 +47,7 @@ export const AppNavbar = memo(function AppNavbar() {
         <span className="ds-nav-host">
           {host || "localhost:8080"}{ms != null ? ` · ${ms}ms` : ""}
         </span>
+        <ThemeToggle />
         <button
           type="button"
           className={clsx("ds-dev-btn", devMode && "is-active")}

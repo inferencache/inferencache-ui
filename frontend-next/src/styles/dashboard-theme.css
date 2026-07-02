@@ -1,5 +1,6 @@
 /* Dashboard dark theme — overrides Tailwind/existing theme */
-:root {
+:root,
+[data-theme="dark"] {
   --bg: #0e0f11;
   --surface: #16181c;
   --surface2: #1e2026;
@@ -24,6 +25,33 @@
   --purple: #a78bfa;
   --red: #ef4444;
   --red-dim: #2a0f0f;
+}
+
+[data-theme="light"] {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface2: #f0f2f5;
+  --border: #e2e6eb;
+  --text: #111318;
+  --muted: #6b7280;
+  --dim: #9ba3b0;
+
+  --green: #16a34a;
+  --green-dim: #f0fdf4;
+  --green-border: #86efac;
+  --green-text: #15803d;
+
+  --amber: #d97706;
+  --amber-dim: #fffbeb;
+  --amber-border: #fde68a;
+  --amber-text: #b45309;
+
+  --blue: #2563eb;
+  --blue-dim: #eff6ff;
+
+  --purple: #7c3aed;
+  --red: #dc2626;
+  --red-dim: #fef2f2;
 }
 
 /* ── Shell ─────────────────────────────────────────────────────────────── */
@@ -165,6 +193,36 @@
   color: var(--amber-text);
   border-color: var(--amber-border);
   background: var(--amber-dim);
+}
+
+/* ── Theme toggle button ─────────────────────────────────────────────────── */
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dim);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--muted);
+  border-color: var(--dim);
+  background: var(--surface2);
+}
+
+.theme-toggle-btn svg {
+  width: 13px;
+  height: 13px;
+  display: block;
 }
 
 /* ── Tab body ────────────────────────────────────────────────────────────── */

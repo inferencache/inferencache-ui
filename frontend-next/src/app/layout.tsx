@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { AppShellProvider } from "@/lib/appShell";
+import { ThemeProvider } from "@/lib/theme";
 import { SkipLink } from "@/components/SkipLink";
 import "./globals.css";
 import "../styles/dashboard-theme.css";
@@ -28,14 +29,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       data-theme="dark"
     >
+      <head>
+        {/* Read localStorage before first paint to avoid flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('inferencache-theme')||localStorage.getItem('promptcache-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className="antialiased"
         style={{ fontFamily: "var(--font-geist-sans, var(--sans))" }}
       >
-        <AppShellProvider>
-          <SkipLink />
-          {children}
-        </AppShellProvider>
+        <ThemeProvider>
+          <AppShellProvider>
+            <SkipLink />
+            {children}
+          </AppShellProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

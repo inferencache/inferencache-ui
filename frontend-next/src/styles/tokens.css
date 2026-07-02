@@ -39,6 +39,33 @@
   --nav-h: 60px;
 }
 
+[data-theme="light"] {
+  color-scheme: light;
+
+  --app-bg: #f4f6f9;
+  --app-surface: #ffffff;
+  --app-surface-deep: #f4f6f9;
+  --app-surface-input: #f9fafb;
+  --app-border: rgba(0, 0, 0, 0.07);
+  --app-border-strong: rgba(0, 0, 0, 0.10);
+  --app-text: #111318;
+  --app-text-secondary: #2d3142;
+  --app-text-muted: #8a92a0;
+  --app-text-dim: #5d6477;
+
+  --landing-bg: #f8f9fb;
+  --landing-surface: #ffffff;
+  --landing-border: #e2e6eb;
+
+  --green: #16a34a;
+  --green-dim: #dcfce7;
+  --amber: #d97706;
+  --red: #dc2626;
+  --action: #ea6d12;
+  --action-gradient: linear-gradient(180deg, #f59e0b, #ea6d12);
+  --landing-accent: #b45309;
+}
+
 ::selection {
   background: rgba(16, 217, 160, 0.22);
 }

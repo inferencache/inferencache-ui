@@ -34,6 +34,35 @@
   --font-mono: var(--font-geist-mono, 'Geist Mono', monospace);
 }
 
+[data-theme="light"] {
+  color-scheme: light;
+
+  --body-bg: #f5f6f8;
+  --bg-surface: #ffffff;
+  --bg-surface-secondary: #f0f2f5;
+  --border-color: #e2e6eb;
+  --border-translucent: #e2e6eb;
+  --text: #111318;
+  --text-secondary: #111318;
+  --text-muted: #6b7280;
+  --text-3: #6b7280;
+  --t-1: #111318;
+  --t-2: #6b7280;
+  --t-3: #9ba3b0;
+  --surface-2: #f0f2f5;
+
+  --primary: #d97706;
+  --accent-green: #16a34a;
+  --accent-teal: #16a34a;
+  --accent-yellow: #d97706;
+  --accent-red: #dc2626;
+  --accent-orange: #d97706;
+
+  --hit-exact: #15803d;
+  --hit-semantic: #b45309;
+  --miss: #dc2626;
+}
+
 body {
   background: var(--body-bg);
   color: var(--text);
